@@ -19,10 +19,14 @@ struct ftscu010_pin {
  * @npins: number of pins included in @pins
  * @pins: the pins included in this group.
  */
+#define FTSCU010_PIN_MAX 32
+#define FTSCU010_MODEX_MAX 19
+#define FTSCU010_PIN_MAGIC_NUM_SIZE  4
 struct ftscu010_pin_group {
 	const char *name;
-	const unsigned npins;
-	const unsigned int *pins;
+	unsigned npins;
+	unsigned int *pins;
+	unsigned int schmitt_trigger;
 };
 
 /**
@@ -56,7 +60,7 @@ struct ftscu010_pinctrl_soc_data {
 	unsigned npins;
 	const struct ftscu010_pmx_function *functions;
 	unsigned nfunctions;
-	const struct ftscu010_pin_group *groups;
+	struct ftscu010_pin_group *groups;
 	unsigned ngroups;
 	const struct ftscu010_pin *map;
 };

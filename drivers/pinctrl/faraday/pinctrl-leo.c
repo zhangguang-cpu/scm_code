@@ -25,7 +25,7 @@
 #include <linux/pinctrl/pinctrl.h>
 
 #include "pinctrl-ftscu010.h"
-#if 0
+
 #define LEO_PMUR_MFS0   0x8500
 #define LEO_PMUR_MFS1   0x8504
 #define LEO_PMUR_MFS2   0x8508
@@ -214,199 +214,6 @@
 #define LEO_PMUR_MFS185 0x87e4
 #define LEO_PMUR_MFS186 0x87e8
 #define LEO_PMUR_MFS187 0x87ec
-#endif
-
-
-#define LEO_PMUR_MFS0   0x500
-#define LEO_PMUR_MFS1   0x504
-#define LEO_PMUR_MFS2   0x508
-#define LEO_PMUR_MFS3   0x50c
-#define LEO_PMUR_MFS4   0x510
-#define LEO_PMUR_MFS5   0x514
-#define LEO_PMUR_MFS6   0x518
-#define LEO_PMUR_MFS7   0x51c
-#define LEO_PMUR_MFS8   0x520
-#define LEO_PMUR_MFS9   0x524
-#define LEO_PMUR_MFS10  0x528
-#define LEO_PMUR_MFS11  0x52c
-#define LEO_PMUR_MFS12  0x530
-#define LEO_PMUR_MFS13  0x534
-#define LEO_PMUR_MFS14  0x538
-#define LEO_PMUR_MFS15  0x53c
-#define LEO_PMUR_MFS16  0x540
-#define LEO_PMUR_MFS17  0x544
-#define LEO_PMUR_MFS18  0x548
-#define LEO_PMUR_MFS19  0x54c
-#define LEO_PMUR_MFS20  0x550
-#define LEO_PMUR_MFS21  0x554
-#define LEO_PMUR_MFS22  0x558
-#define LEO_PMUR_MFS23  0x55c
-#define LEO_PMUR_MFS24  0x560
-#define LEO_PMUR_MFS25  0x564
-#define LEO_PMUR_MFS26  0x568
-#define LEO_PMUR_MFS27  0x56c
-#define LEO_PMUR_MFS28  0x570
-#define LEO_PMUR_MFS29  0x574
-#define LEO_PMUR_MFS30  0x578
-#define LEO_PMUR_MFS31  0x57c
-#define LEO_PMUR_MFS32  0x580
-#define LEO_PMUR_MFS33  0x584
-#define LEO_PMUR_MFS34  0x588
-#define LEO_PMUR_MFS35  0x58c
-#define LEO_PMUR_MFS36  0x590
-#define LEO_PMUR_MFS37  0x594
-#define LEO_PMUR_MFS38  0x598
-#define LEO_PMUR_MFS39  0x59c
-#define LEO_PMUR_MFS40  0x5a0
-#define LEO_PMUR_MFS41  0x5a4
-#define LEO_PMUR_MFS42  0x5a8
-#define LEO_PMUR_MFS43  0x5ac
-#define LEO_PMUR_MFS44  0x5b0
-#define LEO_PMUR_MFS45  0x5b4
-#define LEO_PMUR_MFS46  0x5b8
-#define LEO_PMUR_MFS47  0x5bc
-#define LEO_PMUR_MFS48  0x5c0
-#define LEO_PMUR_MFS49  0x5c4
-#define LEO_PMUR_MFS50  0x5c8
-#define LEO_PMUR_MFS51  0x5cc
-#define LEO_PMUR_MFS52  0x5d0
-#define LEO_PMUR_MFS53  0x5d4
-#define LEO_PMUR_MFS54  0x5d8
-#define LEO_PMUR_MFS55  0x5dc
-#define LEO_PMUR_MFS56  0x5e0
-#define LEO_PMUR_MFS57  0x5e4
-#define LEO_PMUR_MFS58  0x5e8
-#define LEO_PMUR_MFS59  0x5ec
-#define LEO_PMUR_MFS60  0x5f0
-#define LEO_PMUR_MFS61  0x5f4
-#define LEO_PMUR_MFS62  0x5f8
-#define LEO_PMUR_MFS63  0x5fc
-#define LEO_PMUR_MFS64  0x600
-#define LEO_PMUR_MFS65  0x604
-#define LEO_PMUR_MFS66  0x608
-#define LEO_PMUR_MFS67  0x60c
-#define LEO_PMUR_MFS68  0x610
-#define LEO_PMUR_MFS69  0x614
-#define LEO_PMUR_MFS70  0x618
-#define LEO_PMUR_MFS71  0x61c
-#define LEO_PMUR_MFS72  0x620
-#define LEO_PMUR_MFS73  0x624
-#define LEO_PMUR_MFS74  0x628
-#define LEO_PMUR_MFS75  0x62c
-#define LEO_PMUR_MFS76  0x630
-#define LEO_PMUR_MFS77  0x634
-#define LEO_PMUR_MFS78  0x638
-#define LEO_PMUR_MFS79  0x63c
-#define LEO_PMUR_MFS80  0x640
-#define LEO_PMUR_MFS81  0x644
-#define LEO_PMUR_MFS82  0x648
-#define LEO_PMUR_MFS83  0x64c
-#define LEO_PMUR_MFS84  0x650
-#define LEO_PMUR_MFS85  0x654
-#define LEO_PMUR_MFS86  0x658
-#define LEO_PMUR_MFS87  0x65c
-#define LEO_PMUR_MFS88  0x660
-#define LEO_PMUR_MFS89  0x664
-#define LEO_PMUR_MFS90  0x668
-#define LEO_PMUR_MFS91  0x66c
-#define LEO_PMUR_MFS92  0x670
-#define LEO_PMUR_MFS93  0x674
-#define LEO_PMUR_MFS94  0x678
-#define LEO_PMUR_MFS95  0x67c
-#define LEO_PMUR_MFS96  0x680
-#define LEO_PMUR_MFS97  0x684
-#define LEO_PMUR_MFS98  0x688
-#define LEO_PMUR_MFS99  0x68c
-#define LEO_PMUR_MFS100 0x690
-#define LEO_PMUR_MFS101 0x694
-#define LEO_PMUR_MFS102 0x698
-#define LEO_PMUR_MFS103 0x69c
-#define LEO_PMUR_MFS104 0x6a0
-#define LEO_PMUR_MFS105 0x6a4
-#define LEO_PMUR_MFS106 0x6a8
-#define LEO_PMUR_MFS107 0x6ac
-#define LEO_PMUR_MFS108 0x6b0
-#define LEO_PMUR_MFS109 0x6b4
-#define LEO_PMUR_MFS110 0x6b8
-#define LEO_PMUR_MFS111 0x6bc
-#define LEO_PMUR_MFS112 0x6c0
-#define LEO_PMUR_MFS113 0x6c4
-#define LEO_PMUR_MFS114 0x6c8
-#define LEO_PMUR_MFS115 0x6cc
-#define LEO_PMUR_MFS116 0x6d0
-#define LEO_PMUR_MFS117 0x6d4
-#define LEO_PMUR_MFS118 0x6d8
-#define LEO_PMUR_MFS119 0x6dc
-#define LEO_PMUR_MFS120 0x6e0
-#define LEO_PMUR_MFS121 0x6e4
-#define LEO_PMUR_MFS122 0x6e8
-#define LEO_PMUR_MFS123 0x6ec
-#define LEO_PMUR_MFS124 0x6f0
-#define LEO_PMUR_MFS125 0x6f4
-#define LEO_PMUR_MFS126 0x6f8
-#define LEO_PMUR_MFS127 0x6fc
-#define LEO_PMUR_MFS128 0x700
-#define LEO_PMUR_MFS129 0x704
-#define LEO_PMUR_MFS130 0x708
-#define LEO_PMUR_MFS131 0x70c
-#define LEO_PMUR_MFS132 0x710
-#define LEO_PMUR_MFS133 0x714
-#define LEO_PMUR_MFS134 0x718
-#define LEO_PMUR_MFS135 0x71c
-#define LEO_PMUR_MFS136 0x720
-#define LEO_PMUR_MFS137 0x724
-#define LEO_PMUR_MFS138 0x728
-#define LEO_PMUR_MFS139 0x72c
-#define LEO_PMUR_MFS140 0x730
-#define LEO_PMUR_MFS141 0x734
-#define LEO_PMUR_MFS142 0x738
-#define LEO_PMUR_MFS143 0x73c
-#define LEO_PMUR_MFS144 0x740
-#define LEO_PMUR_MFS145 0x744
-#define LEO_PMUR_MFS146 0x748
-#define LEO_PMUR_MFS147 0x74c
-#define LEO_PMUR_MFS148 0x750
-#define LEO_PMUR_MFS149 0x754
-#define LEO_PMUR_MFS150 0x758
-#define LEO_PMUR_MFS151 0x75c
-#define LEO_PMUR_MFS152 0x760
-#define LEO_PMUR_MFS153 0x764
-#define LEO_PMUR_MFS154 0x768
-#define LEO_PMUR_MFS155 0x76c
-#define LEO_PMUR_MFS156 0x770
-#define LEO_PMUR_MFS157 0x774
-#define LEO_PMUR_MFS158 0x778
-#define LEO_PMUR_MFS159 0x77c
-#define LEO_PMUR_MFS160 0x780
-#define LEO_PMUR_MFS161 0x784
-#define LEO_PMUR_MFS162 0x788
-#define LEO_PMUR_MFS163 0x78c
-#define LEO_PMUR_MFS164 0x790
-#define LEO_PMUR_MFS165 0x794
-#define LEO_PMUR_MFS166 0x798
-#define LEO_PMUR_MFS167 0x79c
-#define LEO_PMUR_MFS168 0x7a0
-#define LEO_PMUR_MFS169 0x7a4
-#define LEO_PMUR_MFS170 0x7a8
-#define LEO_PMUR_MFS171 0x7ac
-#define LEO_PMUR_MFS172 0x7b0
-#define LEO_PMUR_MFS173 0x7b4
-#define LEO_PMUR_MFS174 0x7b8
-#define LEO_PMUR_MFS175 0x7bc
-#define LEO_PMUR_MFS176 0x7c0
-#define LEO_PMUR_MFS177 0x7c4
-#define LEO_PMUR_MFS178 0x7c8
-#define LEO_PMUR_MFS179 0x7cc
-#define LEO_PMUR_MFS180 0x7d0
-#define LEO_PMUR_MFS181 0x7d4
-#define LEO_PMUR_MFS182 0x7d8
-#define LEO_PMUR_MFS183 0x7dc
-#define LEO_PMUR_MFS184 0x7e0
-#define LEO_PMUR_MFS185 0x7e4
-#define LEO_PMUR_MFS186 0x7e8
-#define LEO_PMUR_MFS187 0x7ec
-
-
 
 /* Pins */
 enum{
@@ -622,7 +429,7 @@ static const struct pinctrl_pin_desc leo_pins[] = {
 };
 
 /* Pin groups */
-static const unsigned ftcan010_pins[] = {
+static unsigned ftcan010_pins[] = {
 #if 0 //20200518@BC: CAN signals can output to below three PAD sets.
       //             User must to choose one PAD set that depend on the EVB design.
 	LEO_PIN_X_LC_PCLK,
@@ -635,7 +442,7 @@ static const unsigned ftcan010_pins[] = {
 	LEO_PIN_X_UART5_TX,
 #endif
 };
-static const unsigned ftcan010_1_pins[] = {
+static unsigned ftcan010_1_pins[] = {
 #if 0 //20200518@BC: CAN signals can output to below three PAD sets.
       //             User must to choose one PAD set that depend on the EVB design.
 	LEO_PIN_X_LC_DE,
@@ -648,7 +455,7 @@ static const unsigned ftcan010_1_pins[] = {
 	LEO_PIN_X_UART8_TX,
 #endif
 };
-static const unsigned ftgmac030_mii_pins[] = {
+static unsigned ftgmac030_mii_pins[] = {
 	LEO_PIN_X_MII_COL,
 	LEO_PIN_X_MII_CRS,
 	LEO_PIN_X_MII_MDC,
@@ -668,7 +475,7 @@ static const unsigned ftgmac030_mii_pins[] = {
 	LEO_PIN_X_MII_TX_EN,
 	LEO_PIN_X_MII_TX_ER,
 };
-static const unsigned ftgmac030_rgmii_pins[] = {
+static unsigned ftgmac030_rgmii_pins[] = {
 	LEO_PIN_X_RGMII_GTX_CK,
 	LEO_PIN_X_RGMII_MDC,
 	LEO_PIN_X_RGMII_MDIO,
@@ -684,7 +491,7 @@ static const unsigned ftgmac030_rgmii_pins[] = {
 	LEO_PIN_X_RGMII_TXD_2,
 	LEO_PIN_X_RGMII_TXD_3,
 };
-static const unsigned ftgmac030_rmii_pins[] = {
+static unsigned ftgmac030_rmii_pins[] = {
 	LEO_PIN_X_RMII0_MDC,
 	LEO_PIN_X_RMII0_MDIO,
 	LEO_PIN_X_RMII0_REF_CLK,
@@ -697,37 +504,38 @@ static const unsigned ftgmac030_rmii_pins[] = {
 	LEO_PIN_X_RMII0_TX_EN,
 };
 #ifdef CONFIG_PINCTRL_LEO_MODEX
-static const unsigned ftgpio010_pins[] = {
+static unsigned ftgpio010_pins[] = {
 
 	//LEO_PIN_X_UART2_NRTS,    //GPIO0[19] - ModeX
 	//LEO_PIN_X_UART2_NCTS,    //GPIO0[20] - ModeX
 	LEO_PIN_X_I2S_MCLK,      //GPIO0[28]
 	//LEO_PIN_X_I2S0_SCLK,     //GPIO0[23] - ModeX
 	//LEO_PIN_X_I2S0_TXD,      //GPIO0[18] - ModeX
-	LEO_PIN_X_I2S0_RXD,      //GPIO0[22] - ModeX
-	LEO_PIN_X_I2S0_FS,       //GPIO0[25] - ModeX
-	//LEO_PIN_X_MII_TXD_3,     //GPIO0[15]        (key4)//zg-20200910
-	//LEO_PIN_X_MII_TXD_2,     //GPIO0[14]	//zg-20200910
+	//LEO_PIN_X_I2S0_RXD,      //GPIO0[22] - ModeX
+	//LEO_PIN_X_I2S0_FS,       //GPIO0[25] - ModeX
+	LEO_PIN_X_MII_TXD_3,     //GPIO0[15]        (key4)
+	LEO_PIN_X_MII_TXD_2,     //GPIO0[14]
 	//LEO_PIN_X_MII_TX_EN,     //GPIO0[24] - ModeX
-	//LEO_PIN_X_MII_CRS,       //GPIO0[16]  //zg-20200910
+	LEO_PIN_X_MII_CRS,       //GPIO0[16]
 	//LEO_PIN_X_UART5_TX,      //GPIO0[2] - ModeX
 	//LEO_PIN_X_UART5_RX,      //GPIO0[3] - ModeX
-	//LEO_PIN_X_UART8_TX,      //GPIO0[9]
-	//LEO_PIN_X_UART8_RX,      //GPIO0[10]
-	//LEO_PIN_X_UART8_RX_h,    //GPIO0[11]
-	//LEO_PIN_X_LC_DATA_0,     //GPIO0[4]
-	//LEO_PIN_X_LC_DATA_1,     //GPIO0[5]
-	//LEO_PIN_X_LC_DATA_2,     //GPIO0[6]
-	//LEO_PIN_X_LC_DATA_3,     //GPIO0[7]
-	//LEO_PIN_X_LC_DATA_4,     //GPIO0[8]
+	LEO_PIN_X_UART8_TX,      //GPIO0[9]
+	LEO_PIN_X_UART8_RX,      //GPIO0[10]
+	LEO_PIN_X_UART8_RX_h,    //GPIO0[11]
+	LEO_PIN_X_LC_DATA_0,     //GPIO0[4]
+	LEO_PIN_X_LC_DATA_1,     //GPIO0[5]
+	LEO_PIN_X_LC_DATA_2,     //GPIO0[6]
+	LEO_PIN_X_LC_DATA_3,     //GPIO0[7]
+	LEO_PIN_X_LC_DATA_4,     //GPIO0[8]
 	//LEO_PIN_X_LC_DATA_5,     //GPIO0[21] - ModeX
 	//LEO_PIN_X_LC_DATA_6,     //GPIO0[17] - ModeX
-	//LEO_PIN_X_LC_DATA_8,     //GPIO0[12]
-	//LEO_PIN_X_LC_DATA_9,     //GPIO0[13]
-	//LEO_PIN_X_LC_DATA_23,    //GPIO0[27]
-	//LEO_PIN_X_LC_PCLK,       //GPIO0[0]
-	//LEO_PIN_X_LC_VS,         //GPIO0[1]
-	LEO_PIN_X_SPI_DCX1,      //GPIO0[29] //zg-20201230
+	LEO_PIN_X_LC_DATA_8,     //GPIO0[12]
+	LEO_PIN_X_LC_DATA_9,     //GPIO0[13]
+	LEO_PIN_X_LC_DATA_23,    //GPIO0[27]
+	LEO_PIN_X_LC_PCLK,       //GPIO0[0]
+	LEO_PIN_X_LC_VS,         //GPIO0[1]
+	LEO_PIN_X_LC_DATA_22,    //GPIO0[26]
+	
 #if 0
 	LEO_PIN_X_LC_PCLK,       //GPIO0[0]
 	LEO_PIN_X_LC_VS,         //GPIO0[1]
@@ -804,7 +612,7 @@ static const unsigned ftgpio010_pins[] = {
 #endif
 };
 #else
-static const unsigned ftgpio010_pins[] = {
+static unsigned ftgpio010_pins[] = {
 
 #if 0
 #if 1 //20200525@BC: GPIO[0]~GPIO[8] signals can output to below two PAD sets.
@@ -880,10 +688,8 @@ static const unsigned ftgpio010_pins[] = {
 #endif
 };
 #endif
-static const unsigned ftgpio010_1_pins[] = {
-	 LEO_PIN_X_I2S0_SCLK,
-	 LEO_PIN_X_I2S0_TXD,
-#if 0 //zg-20200910
+static  unsigned ftgpio010_1_pins[] = {
+#ifndef CONFIG_PINCTRL_LEO_RMII
 	LEO_PIN_X_RMII0_MDC,     //GPIO1[13]
 	LEO_PIN_X_RMII0_MDIO,    //GPIO1[14]
 	LEO_PIN_X_RMII0_RXD_0,   //GPIO1[10]
@@ -892,6 +698,9 @@ static const unsigned ftgpio010_1_pins[] = {
 	LEO_PIN_X_RMII0_RX_CRSDV,//GPIO1[8]
 	LEO_PIN_X_RMII0_TX_EN,   //GPIO1[7]
 	LEO_PIN_X_RMII0_TXD_0,   //GPIO1[5]
+#endif
+	
+#ifndef CONFIG_PINCTRL_LEO_MII
 	LEO_PIN_X_MII_TXD_1,     //GPIO1[24]
 	LEO_PIN_X_MII_TXD_0,     //GPIO1[23]
 	LEO_PIN_X_MII_TX_ER,     //GPIO1[15]
@@ -905,6 +714,7 @@ static const unsigned ftgpio010_1_pins[] = {
 	LEO_PIN_X_MII_RX_DV,     //GPIO1[26]
 	LEO_PIN_X_MII_MDC,       //GPIO1[25]
 	LEO_PIN_X_MII_MDIO,      //GPIO1[0]
+	LEO_PIN_X_EMMC1_D1,      //GPIO1[6]
 #endif
 	
 #if 0
@@ -1015,7 +825,7 @@ static const unsigned ftgpio010_1_pins[] = {
 	LEO_PIN_X_MII_RXD_1,     //GPIO1[29]
 #endif
 };
-static const unsigned ftiic010_4_pins[] = {
+static unsigned ftiic010_4_pins[] = {
 #if 1 //20200513@BC: I2C signals can output to below two PAD sets.
       //             User must to choose one PAD set that depend on the EVB design.
 	LEO_PIN_X_EMMC1_D2,
@@ -1025,7 +835,7 @@ static const unsigned ftiic010_4_pins[] = {
 	LEO_PIN_X_LC_DATA_9,
 #endif
 };
-static const unsigned ftkbc010_pins[] = {
+static unsigned ftkbc010_pins[] = {
 #if 0 //20200514@BC: CODE_X0~X3 signals can output to below two PAD sets.
       //             User must to choose one PAD set that depend on the EVB design.
 	LEO_PIN_X_I2S0_FS,          //CODE_X0
@@ -1078,7 +888,7 @@ static const unsigned ftkbc010_pins[] = {
 	LEO_PIN_X_UART7_RX,         //CODE_Y7
 #endif
 };
-static const unsigned ftlcdc210_pins[] = {
+static unsigned ftlcdc210_pins[] = {
 	LEO_PIN_X_LC_DATA_0,
 	LEO_PIN_X_LC_DATA_1,
 	LEO_PIN_X_LC_DATA_10,
@@ -1108,15 +918,15 @@ static const unsigned ftlcdc210_pins[] = {
 	LEO_PIN_X_LC_PCLK,
 	LEO_PIN_X_LC_VS,
 };
-static const unsigned ftpwmtmr010_pins[] = {
+static unsigned ftpwmtmr010_pins[] = {
 	LEO_PIN_X_EMMC1_CLK,
 	LEO_PIN_X_I2S0_FS,
 	LEO_PIN_X_I2S0_RXD,
 	LEO_PIN_X_I2S0_SCLK,
-	//LEO_PIN_X_LC_DATA_0,
-	//LEO_PIN_X_LC_DATA_1,
-	//LEO_PIN_X_LC_DATA_2,
-	//LEO_PIN_X_LC_DATA_3,
+	LEO_PIN_X_LC_DATA_0,
+	LEO_PIN_X_LC_DATA_1,
+	LEO_PIN_X_LC_DATA_2,
+	LEO_PIN_X_LC_DATA_3,
 	LEO_PIN_X_MII_MDC,
 	LEO_PIN_X_MII_MDIO,
 	LEO_PIN_X_RGMII_TXD_0,
@@ -1125,24 +935,24 @@ static const unsigned ftpwmtmr010_pins[] = {
 	LEO_PIN_X_UART5_RX_h,
 	LEO_PIN_X_UART8_RX_h,
 };
-static const unsigned ftpwmtmr010_1_pins[] = {
+static unsigned ftpwmtmr010_1_pins[] = {
 	LEO_PIN_X_I2S0_TXD,
 	LEO_PIN_X_RGMII_MDC,
 	LEO_PIN_X_RGMII_MDIO,
 	LEO_PIN_X_RGMII_TXD_2,
 	LEO_PIN_X_RGMII_TXD_3,
 };
-static const unsigned ftpwmtmr010_2_pins[] = {
+static unsigned ftpwmtmr010_2_pins[] = {
 	LEO_PIN_X_RMII0_RX_CRSDV,
 	LEO_PIN_X_RMII0_TXD_0,
 	LEO_PIN_X_RMII0_TXD_1,
 	LEO_PIN_X_RMII0_TX_EN,
 };
-static const unsigned ftpwmtmr010_3_pins[] = {
+static unsigned ftpwmtmr010_3_pins[] = {
 	LEO_PIN_X_RMII0_RXD_0,
 	LEO_PIN_X_RMII0_RX_ER,
 };
-static const unsigned ftsdc021_emmc_1_pins[] = {
+static unsigned ftsdc021_emmc_1_pins[] = {
 	LEO_PIN_X_EMMC1_CLK,
 	LEO_PIN_X_EMMC1_CMD,
 	LEO_PIN_X_EMMC1_D0,
@@ -1155,16 +965,14 @@ static const unsigned ftsdc021_emmc_1_pins[] = {
 	LEO_PIN_X_EMMC1_D7,
 	LEO_PIN_X_EMMC1_RSTN,
 };
-static const unsigned ftssp010_i2s_pins[] = {
-#if 0 //zg-20200924
+static unsigned ftssp010_i2s_pins[] = {
 	LEO_PIN_X_I2S_MCLK,
 	LEO_PIN_X_I2S0_FS,
 	LEO_PIN_X_I2S0_RXD,
 	LEO_PIN_X_I2S0_SCLK,
 	LEO_PIN_X_I2S0_TXD,
-#endif
 };
-static const unsigned ftssp010_i2s_1_pins[] = {
+static unsigned ftssp010_i2s_1_pins[] = {
 	LEO_PIN_X_I2S_MCLK,
 #if 1 //20200513@BC: I2S signals can output to below two PAD sets.
       //             User must to choose one PAD set that depend on the EVB design.
@@ -1179,94 +987,100 @@ static const unsigned ftssp010_i2s_1_pins[] = {
 	LEO_PIN_X_LC_DATA_7,
 #endif
 };
-static const unsigned ftssp010_spi_pins[] = {
+static unsigned ftssp010_spi_pins[] = {
 	LEO_PIN_X_LC_DATA_12,
 	LEO_PIN_X_LC_DATA_13,
 	LEO_PIN_X_SPI_DCX1,
 };
-static const unsigned ftssp010_spi_1_pins[] = {
+static unsigned ftssp010_spi_1_pins[] = {
 	LEO_PIN_X_LC_DATA_14,
 	LEO_PIN_X_LC_DATA_15,
 	LEO_PIN_X_SPI_DCX2,
 };
-static const unsigned ftssp010_spi_2_pins[] = {
+static unsigned ftssp010_spi_2_pins[] = {
 	LEO_PIN_X_LC_DATA_16,
 	LEO_PIN_X_LC_DATA_17,
 	LEO_PIN_X_SPI_DCX1,
 };
-static const unsigned ftssp010_spi_3_pins[] = {
+static unsigned ftssp010_spi_3_pins[] = {
 	LEO_PIN_X_LC_DATA_18,
 	LEO_PIN_X_LC_DATA_19,
 	LEO_PIN_X_SPI_DCX2,
 };
-static const unsigned ftssp010_spi_4_pins[] = {
+static unsigned ftssp010_spi_4_pins[] = {
 	LEO_PIN_X_LC_DATA_20,
 	LEO_PIN_X_LC_DATA_21,
 	LEO_PIN_X_LC_DATA_22,
 	LEO_PIN_X_LC_DATA_23,
 	LEO_PIN_X_SPI_DCX1,
 };
-static const unsigned ftssp010_spi_5_pins[] = {
+static unsigned ftssp010_spi_5_pins[] = {
 	LEO_PIN_X_SPI_DCX2,
 };
 #ifdef CONFIG_PINCTRL_LEO_MODEX
-static const unsigned ftssp010_spi_6_pins[] = {
+static unsigned ftssp010_spi_6_pins[] = {
+#if 0
 	LEO_PIN_X_RGMII_TXD_2,  // SPI_CS0 - ModeX
 	LEO_PIN_X_RGMII_TXD_1,  // SPI_CLK - ModeX
 	LEO_PIN_X_RGMII_TXD_0,  // SPI_MOSI - ModeX
 	LEO_PIN_X_RGMII_RX_CK,  // SPI_MISO - ModeX
 	LEO_PIN_X_RGMII_TXD_3,  // SPI_CS1 - ModeX
+#endif
 };
 #else
-static const unsigned ftssp010_spi_6_pins[] = {
+static unsigned ftssp010_spi_6_pins[] = {
 	LEO_PIN_X_EMMC1_CMD,
 	LEO_PIN_X_EMMC1_RSTN,
 	LEO_PIN_X_SPI_DCX1,
 };
 #endif
-static const unsigned ftuart010_4_pins[] = {
+static unsigned ftuart010_4_pins[] = {
 	LEO_PIN_X_EMMC1_D0,
 	LEO_PIN_X_EMMC1_D1,
 	LEO_PIN_X_LC_DATA_10,
 	LEO_PIN_X_LC_DATA_11,
 };
-static const unsigned ftuart010_5_pins[] = {
+static unsigned ftuart010_5_pins[] = {
 	LEO_PIN_X_UART5_RX,
 	LEO_PIN_X_UART5_RX_h,
 	LEO_PIN_X_UART5_TX,
 };
 #ifdef CONFIG_PINCTRL_LEO_MODEX
-static const unsigned ftuart010_6_pins[] = {
+static unsigned ftuart010_6_pins[] = {
+#if 0
 	LEO_PIN_X_RGMII_MDC,    // UART_RX - ModeX
 	LEO_PIN_X_RGMII_RXCTL,  // UART_TX - ModeX
+#endif 
 };
 #else
-static const unsigned ftuart010_6_pins[] = {
+static unsigned ftuart010_6_pins[] = {
 	LEO_PIN_X_UART6_RX,
 	LEO_PIN_X_UART6_TX,
 };
 #endif
-static const unsigned ftuart010_7_pins[] = {
+static unsigned ftuart010_7_pins[] = {
 	LEO_PIN_X_UART7_RX,
 	LEO_PIN_X_UART7_TX,
 };
-static const unsigned ftuart010_8_pins[] = {
+static unsigned ftuart010_8_pins[] = {
 	LEO_PIN_X_UART8_RX,
 	LEO_PIN_X_UART8_RX_h,
 	LEO_PIN_X_UART8_TX,
 };
 #ifdef CONFIG_PINCTRL_LEO_MODEX
-static const unsigned ftuart010_9_pins[] = {
+static unsigned ftuart010_9_pins[] = {
+#if 0
 	LEO_PIN_X_RGMII_RXD_0,  // UART_RX - ModeX
 	LEO_PIN_X_RGMII_RXD_1,  // UART_TX - ModeX
+#endif
 };
 #else
-static const unsigned ftuart010_9_pins[] = {
+static unsigned ftuart010_9_pins[] = {
 	LEO_PIN_X_UART9_RX,
 	LEO_PIN_X_UART9_TX,
 };
 #endif
-static const unsigned na_pins[] = {
+static unsigned na_pins[] = {
 	LEO_PIN_X_EMMC1_CLK,
 	LEO_PIN_X_EMMC1_CMD,
 	LEO_PIN_X_EMMC1_D0,
@@ -1376,7 +1190,7 @@ static const unsigned na_pins[] = {
 		.npins = ARRAY_SIZE(gname##_pins),	\
 	}
 	
-static const struct ftscu010_pin_group leo_groups[] = {
+static struct ftscu010_pin_group leo_groups[] = {
 	GROUP(ftcan010),
 	GROUP(ftcan010_1),
 	GROUP(ftgmac030_mii),
@@ -1574,7 +1388,7 @@ static struct ftscu010_pin leo_pinmux_map[] = {
 	LEO_PIN(X_RMII0_RXD_0,		MFS132,	FTGMAC030_RMII,		NA,				FTKBC010,		FTPWMTMR010_3,	NA,				NA,				NA,				FTGPIO010_1),
 	LEO_PIN(X_RMII0_RXD_1,		MFS133,	FTGMAC030_RMII,		NA,				FTKBC010,		FTGPIO010_1,	NA,				NA,				NA,				NA),
 	LEO_PIN(X_RMII0_REF_CLK,	MFS134,	FTGMAC030_RMII,		NA,				FTKBC010,		FTGPIO010_1,	NA,				NA,				NA,				NA),
-	LEO_PIN(X_RMII0_MDC,		MFS135,	FTGMAC030_RMII,		NA,				NA,				FTGPIO010_1,	NA,				NA,				NA,				NA),
+	LEO_PIN(X_RMII0_MDC,		MFS135,	FTGMAC030_RMII,		NA,				FTGPIO010_1,				NA,	NA,				NA,				NA,				NA),
 	LEO_PIN(X_RMII0_MDIO,		MFS136,	FTGMAC030_RMII,		NA,				FTPWMTMR010,	FTGPIO010_1,	NA,				NA,				NA,				NA),
 	LEO_PIN(X_MII_TXD_0,		MFS137,	FTGMAC030_MII,		FTKBC010,		NA,				NA,				NA,				NA,				NA,				FTGPIO010_1),
 	LEO_PIN(X_MII_TXD_1,		MFS138,	FTGMAC030_MII,		FTKBC010,		NA,				NA,				NA,				NA,				NA,				FTGPIO010_1),
@@ -1640,7 +1454,7 @@ static struct ftscu010_pin leo_pinmux_map[] = {
 	LEO_PIN(X_UART2_NCTS,		MFS75,	NA,					NA,				NA,				NA,				NA,				NA,				NA,				NA),
 };
 
-static const struct ftscu010_pinctrl_soc_data leo_pinctrl_soc_data = {
+static struct ftscu010_pinctrl_soc_data leo_pinctrl_soc_data = {
 	.pins = leo_pins,
 	.npins = ARRAY_SIZE(leo_pins),
 	.functions = leo_pmx_functions,

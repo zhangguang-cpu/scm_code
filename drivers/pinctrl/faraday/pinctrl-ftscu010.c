@@ -30,11 +30,13 @@
 #include <linux/pinctrl/pinmux.h>
 #include "../core.h"
 #include "pinctrl-ftscu010.h"
+#include <mach/hardware.h>
+#include <mach/ftscu100.h>
 
 struct ftscu010_pmx {
 	struct device *dev;
 	struct pinctrl_dev *pctl;
-	const struct ftscu010_pinctrl_soc_data *soc;
+	struct ftscu010_pinctrl_soc_data *soc;
 	void __iomem *base;
 };
 
@@ -83,6 +85,49 @@ static void ftscu010_pinctrl_pin_dbg_show(struct pinctrl_dev *pctldev,
 }
 #endif
 
+static int ftscu010_pinctrl_dt_node_to_group(
+		struct ftscu010_pmx *pmx,
+		struct device_node *np,
+		u32 func)
+{
+	const __be32 *list;
+	int size = 0;
+	int i;
+	struct ftscu010_pinctrl_soc_data *soc = pmx->soc;
+	struct property *function;
+
+	list = of_get_property(np, "scu010,pins", &size);
+
+	if (!list)
+		return -ENOMEM;
+
+	size = size / FTSCU010_PIN_MAGIC_NUM_SIZE;
+	if(size > FTSCU010_PIN_MAX) {
+		dev_err(pmx->dev, "%pOF: over FTSCU010_PIN_MAX\n", np);
+		return -ENOMEM;
+	}
+
+	soc->groups[func].pins = devm_kzalloc(pmx->dev, size *
+				 sizeof(unsigned int), GFP_KERNEL);
+
+	soc->groups[func].npins = size;
+
+	dev_info(pmx->dev, "Change soc->groups[%d].npins:%d\n",func, soc->groups[func].npins);
+
+	for (i = 0; i < size; i++) {
+		soc->groups[func].pins[i] = be32_to_cpu(*list++);
+		dev_info(pmx->dev, "soc->groups[%d].pins[%d]:%d\n",func, i, soc->groups[func].pins[i]);
+	}
+       function = of_find_property(np, "scu010,schmitt-trigger", NULL)
+;
+       if (function) {
+               soc->groups[func].schmitt_trigger = 1;
+       } else {
+               soc->groups[func].schmitt_trigger = 0;
+       }
+
+	return 0;
+}
 static int ftscu010_pinctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
 					   struct device_node *np,
 					   struct pinctrl_map **map,
@@ -113,12 +158,14 @@ static int ftscu010_pinctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
 		return -EINVAL;
 	}
 
+	ftscu010_pinctrl_dt_node_to_group(pmx, np, func);
+
 	new_map[0].type = PIN_MAP_TYPE_MUX_GROUP;
 	new_map[0].data.mux.function = pmx->soc->functions[func].name;
 	new_map[0].data.mux.group = NULL;
 
 	dev_info(pmx->dev, "maps: function %s(#%d) group %s num %d\n",
-	         (*map)->data.mux.function, func, (*map)->data.mux.group, map_num);
+		 (*map)->data.mux.function, func, (*map)->data.mux.group, map_num);
 
 	return 0;
 }
@@ -202,15 +249,18 @@ static void ftscu010_pinctrl_setup(struct pinctrl_dev *pctldev,
 	const struct ftscu010_pinctrl_soc_data *soc = pmx->soc;
 	const struct ftscu010_pin_group *group;
 	int i, npins;
-
-/*	
+	unsigned int schmitt_trigger = 0;
 	dev_info(pmx->dev, "setup: %s function %s(#%d) group %s(#%d)\n",
 		enable ? "enable" : "disable",
 		soc->functions[selector].name, selector,
 		soc->groups[gselector].name, gselector);
-*/
+
 	group = &pmx->soc->groups[gselector];
 	npins = group->npins;
+	if(group->schmitt_trigger) {
+		schmitt_trigger = (1 << 9);
+	}
+
 
 	/* for each pin in the group */
 	for (i = 0; i < npins; ++i) {
@@ -225,11 +275,16 @@ static void ftscu010_pinctrl_setup(struct pinctrl_dev *pctldev,
 
 		val = readl(pmx->base + pin->offset);
 		val &= ~(FTSCU010_PIN_MASK << shift);
+		val |= schmitt_trigger;
 		if (enable)
 			val |= ftscu010_pinmux_setting(pin, selector) << shift;
 		writel(val, pmx->base + pin->offset);
+
+		printk("val:%x, addr:%x, shift:%d, selector:%d\n",
+			val, (volatile u32 __force *)(pmx->base + pin->offset),
+			shift, selector);
 	}
-	
+
 }
 
 static int ftscu010_pinctrl_set_mux(struct pinctrl_dev *pctldev,
@@ -252,11 +307,43 @@ static struct pinctrl_desc ftscu010_pinctrl_desc = {
 	.owner = THIS_MODULE,
 };
 
+static void ftscu010_pinctrl_dt_node_to_modex(
+		struct ftscu010_pmx *pmx,
+		struct device_node *np
+)
+{
+	const __be32 *list;
+	int size = 0;
+	int i;
+	unsigned int value = 0;
+
+	list = of_get_property(np, "scu010,modex", &size);
+
+	if (!list)
+		return;
+
+	size = size / FTSCU010_PIN_MAGIC_NUM_SIZE;
+	if(size > FTSCU010_MODEX_MAX) {
+		dev_err(pmx->dev, "%pOF: over FTSCU010_MODEX_MAX\n", np);
+		return;
+	}
+
+	//value = readl((void __iomem *)PLAT_SCU_VA_BASE + 0x8204);
+	for (i = 0; i < size; i++) {
+		value |= be32_to_cpu(*list++);
+	}
+	dev_info(pmx->dev, "scu010,modex value:%x\n", value);
+
+	writel(value, (void __iomem *)PLAT_SCU_VA_BASE + 0x8204);
+
+}
+
 int ftscu010_pinctrl_probe(struct platform_device *pdev,
 			   const struct ftscu010_pinctrl_soc_data *data)
 {
 	struct ftscu010_pmx *pmx;
 	struct resource *res;
+	struct device_node *dev_np = pdev->dev.of_node;
 	
 	pmx = devm_kzalloc(&pdev->dev, sizeof(*pmx), GFP_KERNEL);
 	if (!pmx) {
@@ -286,6 +373,7 @@ int ftscu010_pinctrl_probe(struct platform_device *pdev,
 	}
 
 	platform_set_drvdata(pdev, pmx);
+	ftscu010_pinctrl_dt_node_to_modex(pmx, dev_np);
 	dev_info(&pdev->dev, "Initialized FTSCU010 pinmux driver\n");
 
 	return 0;

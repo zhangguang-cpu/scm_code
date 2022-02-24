@@ -12,7 +12,9 @@
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/pinctrl/pinctrl-leo.h>
-#include <dt-bindings/input/linux-event-codes.h> 
+#include <dt-bindings/thermal/thermal.h>
+#include <dt-bindings/scu/scu-leo.h>
+ 
 / {
 	model = "leo";
 	compatible = "arm,faraday-soc";
@@ -91,7 +93,7 @@
 	
 	timer {
 		compatible = "arm,armv7-timer";
-		clock-frequency = <800000000>;
+		clock-frequency = <1025000000>;  /* kernel default cpu frequency */
 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
 		             <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
 		             <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
@@ -104,8 +106,9 @@
 	
 	chosen {
 		bootargs = "mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000 root=/dev/mmcblk0p2 rw init=/sbin/init rootfstype=ext4";
-		//bootargs = "mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000 root=/dev/mmcblk0p2 rw init=/linuxrc rootfstype=ext4";
-		//bootargs = "root=/dev/nfs   nfsroot=192.168.0.2:/home/niubin/rootfs,vers=3 ip=192.168.0.80:192.168.0.2:192.168.0.1:255.255.255.0::eth0:off init=/linuxrc mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000";
+               //bootargs = "mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000 root=/dev/mmcblk0p2 rw init=/linuxrc rootfstype=ext4";
+               //bootargs = "root=/dev/nfs   nfsroot=192.168.0.2:/home/niubin/rootfs,vers=3 ip=192.168.0.80:192.168.0.2:192.168.0.1:255.255.255.0::eth0:off init=/linuxrc mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000";
+	       //bootargs = "mem=2048M console=ttyS0,115200 root=/dev/mmcblk0p7 earlycon=uart8250,mmio32,0x54e00000";
 	};
 	
 	clocks {
@@ -401,129 +404,566 @@
 			clocks = <&pll1>;
 		};
 	};
-	
+
+	scu {
+		compatible = "scm701d-scu";
+		status = "okay";
+
+		pll,control = <
+			PLL0_CONTROL_EN		// CA7 /* always onlive */
+			PLL1_CONTROL_EN		// MAC/OTG/SPI/SDC/AES/SHA/SCU/EFUSE/TRNG/LCD
+			PLL2_CONTROL_EN		// EMC/OTG/DMA/PWM/UART
+			PLL3_CONTROL_EN		// audio  / emmc
+			PLL4_CONTROL_EN		// DDR
+			//PLL5_CONTROL_EN         // LCD
+			PLL6_CONTROL_EN		// SPI/PWM/IIC/UART/GPIO/WDT/CAN/KBC/M33/DMA
+			PLL7_CONTROL_EN		// EMMC
+		>;
+
+		AHB,control = <
+			//AHB_CM33_DMAC_HCLK_EN
+			//AHB_CM33_CPU_HCLK_EN
+			//AHB_SPI2AHB_HCLK_EN	
+			//AHB_CRYPT_HCLK_EN	
+			//AHB_EMMC1_HCLK_EN	
+			AHB_EMMC0_HCLK_EN	
+		>;
+	};
+
 	pinctrl {
 		compatible = "ftscu010-pinmux", "pinctrl-leo";
-		reg = <0x28008000 0x1000>;
+		reg = <0x28000000 0xA000>;
+
+		scu010,modex = <
+			LEO_Mode_X_GPIO0_26
+			LEO_Mode_X_GPIO0_25
+			LEO_Mode_X_GPIO0_24   /*X_MII_TX_EN  Bluetooth_CTS*/
+			LEO_Mode_X_GPIO0_23
+			LEO_Mode_X_GPIO0_22
+			//LEO_Mode_X_GPIO0_21
+			//LEO_Mode_X_GPIO0_20
+			LEO_Mode_X_GPIO0_19
+			//LEO_Mode_X_GPIO0_18
+			//LEO_Mode_X_GPIO0_17
+			LEO_Mode_X_GPIO0_3
+			LEO_Mode_X_GPIO0_2
+		>;
 		
 		pinctrl_ftcan010: pinctrl_ftcan010 {
 			scu010,function = <LEO_MUX_FTCAN010>;
+			scu010,pins = <
+			#if 0
+				LEO_PIN_X_LC_PCLK
+				LEO_PIN_X_LC_VS
+			#elif 0
+				LEO_PIN_X_RMII0_TXD_0
+				LEO_PIN_X_RMII0_TXD_1
+			#else
+				LEO_PIN_X_UART5_RX
+				LEO_PIN_X_UART5_TX
+			#endif
+			>;
 		};
 		
 		pinctrl_ftcan010_1: pinctrl_ftcan010_1 {
 			scu010,function = <LEO_MUX_FTCAN010_1>;
+			scu010,pins = <
+			#if 0
+				LEO_PIN_X_LC_DE
+				LEO_PIN_X_LC_HS
+			#elif 0
+				LEO_PIN_X_RMII0_RX_CRSDV
+				LEO_PIN_X_RMII0_TX_EN
+			#else
+				LEO_PIN_X_UART8_RX
+				LEO_PIN_X_UART8_TX
+			#endif
+			>;
 		};
 		
 		pinctrl_ftgmac030_mii: pinctrl_ftgmac030_mii {
 			scu010,function = <LEO_MUX_FTGMAC030_MII>;
+			scu010,pins = <
+				LEO_PIN_X_MII_COL
+				LEO_PIN_X_MII_CRS
+				LEO_PIN_X_MII_MDC
+				LEO_PIN_X_MII_MDIO
+				LEO_PIN_X_MII_RXD_0
+				LEO_PIN_X_MII_RXD_1
+				LEO_PIN_X_MII_RXD_2
+				LEO_PIN_X_MII_RXD_3
+				LEO_PIN_X_MII_RX_CK
+				LEO_PIN_X_MII_RX_DV
+				LEO_PIN_X_MII_RX_ER
+				LEO_PIN_X_MII_TXD_0
+				LEO_PIN_X_MII_TXD_1
+				LEO_PIN_X_MII_TXD_2
+				LEO_PIN_X_MII_TXD_3
+				LEO_PIN_X_MII_TX_CK
+				LEO_PIN_X_MII_TX_EN
+				LEO_PIN_X_MII_TX_ER
+			>;
 		};
 		
 		pinctrl_ftgmac030_rgmii: pinctrl_ftgmac030_rgmii {
 			scu010,function = <LEO_MUX_FTGMAC030_RGMII>;
+			scu010,pins = <
+				LEO_PIN_X_RGMII_GTX_CK
+				LEO_PIN_X_RGMII_MDC
+				//LEO_PIN_X_RGMII_MDIO
+				LEO_PIN_X_RGMII_RXCTL
+				LEO_PIN_X_RGMII_RXD_0
+				LEO_PIN_X_RGMII_RXD_1
+				LEO_PIN_X_RGMII_RXD_2
+				LEO_PIN_X_RGMII_RXD_3
+				LEO_PIN_X_RGMII_RX_CK
+				LEO_PIN_X_RGMII_TXCTL
+				LEO_PIN_X_RGMII_TXD_0
+				LEO_PIN_X_RGMII_TXD_1
+				LEO_PIN_X_RGMII_TXD_2
+				LEO_PIN_X_RGMII_TXD_3
+			>;
 		};
 		
 		pinctrl_ftgmac030_rmii: pinctrl_ftgmac030_rmii {
 			scu010,function = <LEO_MUX_FTGMAC030_RMII>;
+			scu010,pins = <
+				LEO_PIN_X_RMII0_MDC
+				LEO_PIN_X_RMII0_MDIO
+				LEO_PIN_X_RMII0_REF_CLK
+				LEO_PIN_X_RMII0_RXD_0
+				LEO_PIN_X_RMII0_RXD_1
+				LEO_PIN_X_RMII0_RX_CRSDV
+				LEO_PIN_X_RMII0_RX_ER
+				LEO_PIN_X_RMII0_TXD_0
+				LEO_PIN_X_RMII0_TXD_1
+				LEO_PIN_X_RMII0_TX_EN
+			>;
 		};
 		
 		pinctrl_ftgpio010: pinctrl_ftgpio010 {
+			scu010,schmitt-trigger;
 			scu010,function = <LEO_MUX_FTGPIO010>;
+			scu010,pins = <
+				LEO_PIN_X_LC_PCLK        //GPIO0[0] - Mode5 / Mode7
+				//LEO_PIN_X_UART5_TX       //GPIO0[0] - Mode3 / GPIO0[2] - ModeX
+				//LEO_PIN_X_UART5_RX       //GPIO0[1] - Mode3 / GPIO0[3] - ModeX   
+				//LEO_PIN_X_LC_VS          //GPIO0[1] - Mode5 / Mode7
+				//LEO_PIN_X_LC_HS          //GPIO0[2] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DE          //GPIO0[3] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_0      //GPIO0[4] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_1      //GPIO0[5] - Mode5 / Mode7
+				LEO_PIN_X_LC_DATA_2      //GPIO0[6] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_3      //GPIO0[7] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_4      //GPIO0[8] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_5      //GPIO0[9] - Mode5 / Mode7 / GPIO0[21] - ModeX
+				//LEO_PIN_X_UART8_TX       //GPIO0[9] - Mode3  
+				//LEO_PIN_X_MII_RX_CK      //GPIO0[9] - Mode1 / Mode3 / Mode4
+				//LEO_PIN_X_LC_DATA_6      //GPIO0[10] - Mode5 / Mode7 / GPIO0[17] - ModeX
+				//LEO_PIN_X_MII_RXD_2      //GPIO0[10] - Mode1 / Mode3 / Mode4
+				//LEO_PIN_X_UART8_RX       //GPIO0[10] - Mode3
+				//LEO_PIN_X_MII_RXD_3      //GPIO0[11] - Mode1 / Mode3 / Mode4) 
+				//LEO_PIN_X_UART8_RX_h     //GPIO0[11] - Mode3 
+				//LEO_PIN_X_LC_DATA_7      //GPIO0[11] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_8      //GPIO0[12] - Mode5 / Mode7
+				//LEO_PIN_X_MII_TX_CK      //GPIO0[12] - Mode1 / Mode3 /Mode4 
+				//LEO_PIN_X_LC_DATA_9      //GPIO0[13] - Mode5 / Mode7
+				//LEO_PIN_X_MII_TX_ER      //GPIO0[13] - Mode1 / Mode3 / Mode4
+				//LEO_PIN_X_LC_DATA_10     //GPIO0[14] - Mode5 / Mode7
+				//LEO_PIN_X_MII_TXD_2      //GPIO0[14] - Mode1 / Mode3 / Mode4
+				//LEO_PIN_X_MII_TXD_3      //GPIO0[15] - Mode1 / Mode3 / Mode4
+				//LEO_PIN_X_LC_DATA_11     //GPIO0[15] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_12     //GPIO0[16] - Mode5 / Mode7
+				//LEO_PIN_X_MII_CRS        //GPIO0[16] - Mode1 / Mode3 / Mode4
+				//LEO_PIN_X_LC_DATA_13     //GPIO0[17] - Mode5 / Mode7
+				//LEO_PIN_X_MII_COL        //GPIO0[17] - Mode1 / Mode3 / Mode4
+				//LEO_PIN_X_LC_DATA_14     //GPIO0[18] - Mode5 / Mode7
+				//LEO_PIN_X_I2S0_TXD       //GPIO0[18] - ModeX 
+				//LEO_PIN_X_LC_DATA_15     //GPIO0[19] - Mode5 / Mode7
+				//LEO_PIN_X_UART2_NRTS     //GPIO0[19] - ModeX 
+				//LEO_PIN_X_LC_DATA_16     //GPIO0[20] - Mode5 / Mode7
+				//LEO_PIN_X_UART2_NCTS     //GPIO0[20] - ModeX
+				//LEO_PIN_X_LC_DATA_17     //GPIO0[21] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_18     //GPIO0[22] - Mode5 / Mode7
+				//LEO_PIN_X_I2S0_RXD       //GPIO0[22] - ModeX /GPIO1[12] - Mode2
+				//LEO_PIN_X_I2S0_SCLK      //GPIO0[23] - ModeX /GPIO1[13] - Mode2
+				//LEO_PIN_X_LC_DATA_19     //GPIO0[23] - Mode5 / Mode7
+				//LEO_PIN_X_LC_DATA_20     //GPIO0[24] - Mode5 / Mode7
+				//LEO_PIN_X_MII_TX_EN      //GPIO0[24] - Mode7
+				//LEO_PIN_X_LC_DATA_21     //GPIO0[25] - Mode5 / Mode7
+				//LEO_PIN_X_I2S0_FS        //GPIO0[25] - ModeX
+				//LEO_PIN_X_RMII0_RXD_1    //GPIO0[26] - ModeX 
+				//LEO_PIN_X_LC_DATA_22     //GPIO0[26] - Mode5 / Mode7
+				LEO_PIN_X_LC_DATA_23     //GPIO0[27] - Mode5 / Mode7
+				LEO_PIN_X_I2S_MCLK       //GPIO0[28] - Mode2 / Mode6 / Mode7
+				//LEO_PIN_X_MII_MDC        //GPIO0[31] - Mode7
+				LEO_PIN_X_LC_DE         //gpio0[3]
+			>;
 		};
 		
 		pinctrl_ftgpio010_1: pinctrl_ftgpio010_1 {
+			scu010,schmitt-trigger;
 			scu010,function = <LEO_MUX_FTGPIO010_1>;
+			scu010,pins = <
+				//LEO_PIN_X_MII_MDIO       //GPIO1[0] - Mode7 / GPIO1[26] - Mode1 / Mode3
+				//LEO_PIN_X_EMMC1_D7       //GPIO1[0] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_MII_RX_CK      //GPIO1[1] - Mode7
+				//LEO_PIN_X_EMMC1_D6       //GPIO1[1] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_EMMC1_D5       //GPIO1[2] - Mode1 / Mode3 / Mode4 /Mode5 / Mode7
+				//LEO_PIN_X_MII_RXD_2      //GPIO1[2] - Mode7
+				//LEO_PIN_X_MII_RXD_3      //GPIO1[3] - Mode7
+				//LEO_PIN_X_EMMC1_D4       //GPIO1[3] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_EMMC1_D3       //GPIO1[4] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_MII_TX_CK      //GPIO1[4] - Mode7
+				//LEO_PIN_X_RMII0_TXD_0    //GPIO1[5] - Mode7
+				//LEO_PIN_X_EMMC1_D2       //GPIO1[5] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_EMMC1_D1       //GPIO1[6] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_RMII0_TXD_1    //GPIO1[6] - Mode7
+				//LEO_PIN_X_EMMC1_D0       //GPIO1[7] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_RMII0_TX_EN    //GPIO1[7] - Mode7
+				//LEO_PIN_X_EMMC1_RSTN     //GPIO1[8] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_RMII0_RX_CRSDV //GPIO1[8] - Mode7
+				//LEO_PIN_X_EMMC1_CMD      //GPIO1[9] - Mode1 / Mode3 / Mode4 / Mode5 / Mode7
+				//LEO_PIN_X_RMII0_RX_ER    //GPIO1[9] - Mode7
+				//LEO_PIN_X_RMII0_RXD_0    //GPIO1[10] - Mode7
+				//LEO_PIN_X_RMII0_RXD_1    //GPIO1[11] - Mode3 / Mode5 / Mode7
+				//LEO_PIN_X_I2S0_FS        //GPIO1[11] - Mode2
+				//LEO_PIN_X_I2S0_RXD       //GPIO1[12] - Mode2
+				//LEO_PIN_X_RGMII_GTX_CK   //GPIO1[12] - Mode3 / Mode5 / Mode7
+				//LEO_PIN_X_UART8_TX       //GPIO1[12] - Mode6
+				//LEO_PIN_X_I2S0_SCLK      //GPIO1[13] - Mode2
+				//LEO_PIN_X_UART8_RX       //GPIO1[13] - Mode6
+				//LEO_PIN_X_RGMII_MDC      //GPIO1[13] - Mode3 / Mode5 / Mode7 / GPIO1[25] - Mode2
+				//LEO_PIN_X_UART8_RX_h     //GPIO1[14] - Mode6
+				//LEO_PIN_X_RMII0_MDIO      //GPIO1[14] - Mode3 / Mode5 / Mode7
+				//LEO_PIN_X_MII_TX_ER      //GPIO1[15] - Mode7
+				//LEO_PIN_X_MII_TXD_2      //GPIO1[16] - Mode7
+				//LEO_PIN_X_MII_TXD_3      //GPIO1[17] - Mode7
+				//LEO_PIN_X_MII_CRS        //GPIO1[18] - Mode7
+				//LEO_PIN_X_MII_COL        //GPIO1[19] - Mode7
+				//LEO_PIN_X_MII_TXD_0      //GPIO1[23] - Mode7
+				//LEO_PIN_X_RGMII_MDC      //GPIO1[23] - Mode1 / Mode2 / Mode4
+				//LEO_PIN_X_RGMII_MDIO     //GPIO1[24] - Mode1 / Mode2 / Mode4
+				//LEO_PIN_X_MII_TXD_1      //GPIO1[24] - Mode7
+				//LEO_PIN_X_MII_TX_EN      //GPIO1[25] - ModeX
+				//LEO_PIN_X_MII_MDC        //GPIO1[25] - Mode1 / Mode3
+				//LEO_PIN_X_RMII0_MDC      //GPIO1[25] - Mode2 / GPIO1[13] - Mode3 / Mode5 / Mode7
+				//LEO_PIN_X_MII_RX_DV      //GPIO1[26] - Mode7
+				//LEO_PIN_X_MII_RX_ER      //GPIO1[27] - Mode7
+				//LEO_PIN_X_MII_RXD_0      //GPIO1[28] - Mode7
+				//LEO_PIN_X_MII_RXD_1      //GPIO1[29] - Mode7
+			>;
 		};
 		
 		pinctrl_ftiic010_4: pinctrl_ftiic010_4 {
 			scu010,function = <LEO_MUX_FTIIC010_4>;
+			scu010,pins = <
+			#if 1
+				LEO_PIN_X_EMMC1_D2
+				LEO_PIN_X_EMMC1_D3
+			#else
+				LEO_PIN_X_LC_DATA_8
+				LEO_PIN_X_LC_DATA_9
+			#endif
+			>;
 		};
 		
 		pinctrl_ftkbc010: pinctrl_ftkbc010 {
 			scu010,function = <LEO_MUX_FTKBC010>;
+			scu010,pins = <
+			#if 0
+				LEO_PIN_X_I2S0_FS			//CODE_X0
+				LEO_PIN_X_I2S0_RXD 			//CODE_X1
+				LEO_PIN_X_I2S0_SCLK			//CODE_X2
+				LEO_PIN_X_I2S0_TXD 			//CODE_X3
+			#else
+				LEO_PIN_X_RGMII_RX_CK		//CODE_X0
+				LEO_PIN_X_RGMII_RXD_0		//CODE_X1
+				LEO_PIN_X_RGMII_RXD_1		//CODE_X2
+				LEO_PIN_X_RGMII_RXD_2		//CODE_X3
+			#endif
+				LEO_PIN_X_RGMII_RXD_3		//CODE_X4
+				LEO_PIN_X_RGMII_RXCTL		//CODE_X5
+				LEO_PIN_X_RGMII_GTX_CK 		//CODE_X6
+				LEO_PIN_X_RGMII_TXCTL		//CODE_X7
+
+			#if 0
+				LEO_PIN_X_MII_TXD_0			//CODE_Y0
+				LEO_PIN_X_MII_TXD_1			//CODE_Y1
+				LEO_PIN_X_MII_TX_EN			//CODE_Y2
+				LEO_PIN_X_MII_RX_DV			//CODE_Y3
+				LEO_PIN_X_MII_RX_ER			//CODE_Y4
+				LEO_PIN_X_MII_RXD_0			//CODE_Y5
+				LEO_PIN_X_MII_RXD_1			//CODE_Y6
+			#elif 1
+				LEO_PIN_X_RMII0_TXD_0		//CODE_Y0
+				LEO_PIN_X_RMII0_TXD_1		//CODE_Y1
+				LEO_PIN_X_RMII0_TX_EN		//CODE_Y2
+				LEO_PIN_X_RMII0_RX_CRSDV	//CODE_Y3
+				LEO_PIN_X_RMII0_RX_ER		//CODE_Y4
+				LEO_PIN_X_RMII0_RXD_0		//CODE_Y5
+				LEO_PIN_X_RMII0_RXD_1		//CODE_Y6
+			#else
+				LEO_PIN_X_UART5_TX 			//CODE_Y0
+				LEO_PIN_X_UART5_RX 			//CODE_Y1
+				LEO_PIN_X_UART5_RX_h		//CODE_Y2
+				LEO_PIN_X_UART6_TX 			//CODE_Y3
+				LEO_PIN_X_UART6_RX 			//CODE_Y4
+				LEO_PIN_X_UART9_TX 			//CODE_Y5
+				LEO_PIN_X_UART7_TX 			//CODE_Y6
+			#endif
+
+			#if 1
+				LEO_PIN_X_RMII0_REF_CLK		//CODE_Y7
+			#else
+				LEO_PIN_X_UART7_RX	 		//CODE_Y7
+			#endif
+			>;
 		};
 		
 		pinctrl_ftlcdc210: pinctrl_ftlcdc210 {
 			scu010,function = <LEO_MUX_FTLCDC210>;
+			scu010,pins = <
+				LEO_PIN_X_LC_DATA_0
+				LEO_PIN_X_LC_DATA_1
+				LEO_PIN_X_LC_DATA_10
+				LEO_PIN_X_LC_DATA_11
+				LEO_PIN_X_LC_DATA_12
+				LEO_PIN_X_LC_DATA_13
+				LEO_PIN_X_LC_DATA_14
+				LEO_PIN_X_LC_DATA_15
+				LEO_PIN_X_LC_DATA_16
+				LEO_PIN_X_LC_DATA_17
+				LEO_PIN_X_LC_DATA_18
+				LEO_PIN_X_LC_DATA_19
+				LEO_PIN_X_LC_DATA_2
+				LEO_PIN_X_LC_DATA_20
+				LEO_PIN_X_LC_DATA_21
+				LEO_PIN_X_LC_DATA_22
+				LEO_PIN_X_LC_DATA_23
+				LEO_PIN_X_LC_DATA_3
+				LEO_PIN_X_LC_DATA_4
+				LEO_PIN_X_LC_DATA_5
+				LEO_PIN_X_LC_DATA_6
+				LEO_PIN_X_LC_DATA_7
+				LEO_PIN_X_LC_DATA_8
+				LEO_PIN_X_LC_DATA_9
+				LEO_PIN_X_LC_DE
+				LEO_PIN_X_LC_HS
+				LEO_PIN_X_LC_PCLK
+				LEO_PIN_X_LC_VS
+			>;
 		};
 		
 		pinctrl_ftpwmtmr010: pinctrl_ftpwmtmr010 {
 			scu010,function = <LEO_MUX_FTPWMTMR010>;
+			scu010,pins = <
+				LEO_PIN_X_EMMC1_CLK
+				LEO_PIN_X_I2S0_FS
+				LEO_PIN_X_I2S0_RXD
+				LEO_PIN_X_I2S0_SCLK
+				LEO_PIN_X_LC_DATA_0
+				LEO_PIN_X_LC_DATA_1
+				LEO_PIN_X_LC_DATA_2
+				LEO_PIN_X_LC_DATA_3
+				LEO_PIN_X_MII_MDC
+				LEO_PIN_X_MII_MDIO
+				LEO_PIN_X_RGMII_TXD_0
+				LEO_PIN_X_RGMII_TXD_1
+				LEO_PIN_X_RMII0_MDIO
+				LEO_PIN_X_UART5_RX_h
+				LEO_PIN_X_UART8_RX_h
+			>;
 		};
 		
 		pinctrl_ftpwmtmr010_1: pinctrl_ftpwmtmr010_1 {
 			scu010,function = <LEO_MUX_FTPWMTMR010_1>;
+			scu010,pins = <
+				LEO_PIN_X_I2S0_TXD
+				LEO_PIN_X_RGMII_MDC
+				//LEO_PIN_X_RGMII_MDIO
+				LEO_PIN_X_RGMII_TXD_2
+				LEO_PIN_X_RGMII_TXD_3
+			>;
 		};
 		
 		pinctrl_ftpwmtmr010_2: pinctrl_ftpwmtmr010_2 {
 			scu010,function = <LEO_MUX_FTPWMTMR010_2>;
+			scu010,pins = <
+				LEO_PIN_X_RMII0_RX_CRSDV
+				LEO_PIN_X_RMII0_TXD_0
+				LEO_PIN_X_RMII0_TXD_1
+				LEO_PIN_X_RMII0_TX_EN
+			>;
 		};
 		
 		pinctrl_ftpwmtmr010_3: pinctrl_ftpwmtmr010_3 {
 			scu010,function = <LEO_MUX_FTPWMTMR010_3>;
+			scu010,pins = <
+				LEO_PIN_X_RMII0_RXD_0
+				LEO_PIN_X_RMII0_RX_ER
+			>;
 		};
 		
 		pinctrl_ftsdc021_emmc_1: pinctrl_ftsdc021_emmc_1 {
 			scu010,function = <LEO_MUX_FTSDC021_EMMC_1>;
+			scu010,pins = <
+				LEO_PIN_X_EMMC1_CLK
+				LEO_PIN_X_EMMC1_CMD
+				LEO_PIN_X_EMMC1_D0
+				LEO_PIN_X_EMMC1_D1
+				LEO_PIN_X_EMMC1_D2
+				LEO_PIN_X_EMMC1_D3
+				LEO_PIN_X_EMMC1_D4
+				LEO_PIN_X_EMMC1_D5
+				LEO_PIN_X_EMMC1_D6
+				LEO_PIN_X_EMMC1_D7
+				LEO_PIN_X_EMMC1_RSTN
+			>;
 		};
 		
 		pinctrl_ftssp010_i2s: pinctrl_ftssp010_i2s {
 			scu010,function = <LEO_MUX_FTSSP010_I2S>;
+			scu010,pins = <
+				LEO_PIN_X_I2S_MCLK
+				LEO_PIN_X_I2S0_FS
+				LEO_PIN_X_I2S0_RXD
+				LEO_PIN_X_I2S0_SCLK
+				LEO_PIN_X_I2S0_TXD
+			>;
 		};
 		
 		pinctrl_ftssp010_i2s_1: pinctrl_ftssp010_i2s_1 {
 			scu010,function = <LEO_MUX_FTSSP010_I2S_1>;
+			scu010,pins = <
+				LEO_PIN_X_I2S_MCLK
+			#if 1
+				LEO_PIN_X_EMMC1_D4
+				LEO_PIN_X_EMMC1_D5
+				LEO_PIN_X_EMMC1_D6
+				LEO_PIN_X_EMMC1_D7
+			#else
+				LEO_PIN_X_LC_DATA_4
+				LEO_PIN_X_LC_DATA_5
+				LEO_PIN_X_LC_DATA_6
+				LEO_PIN_X_LC_DATA_7
+			#endif
+			>;
 		};
 		
 		pinctrl_ftssp010_spi: pinctrl_ftssp010_spi {
 			scu010,function = <LEO_MUX_FTSSP010_SPI>;
+			scu010,pins = <
+				LEO_PIN_X_LC_DATA_12
+				LEO_PIN_X_LC_DATA_13
+				LEO_PIN_X_SPI_DCX1
+			>;
 		};
 		
 		pinctrl_ftssp010_spi_1: pinctrl_ftssp010_spi_1 {
 			scu010,function = <LEO_MUX_FTSSP010_SPI_1>;
+			scu010,pins = <
+				LEO_PIN_X_LC_DATA_14
+				LEO_PIN_X_LC_DATA_15
+				LEO_PIN_X_SPI_DCX2
+			>;
 		};
 		
 		pinctrl_ftssp010_spi_2: pinctrl_ftssp010_spi_2 {
 			scu010,function = <LEO_MUX_FTSSP010_SPI_2>;
+			scu010,pins = <
+				LEO_PIN_X_LC_DATA_16
+				LEO_PIN_X_LC_DATA_17
+				LEO_PIN_X_SPI_DCX1
+			>;
 		};
 		
 		pinctrl_ftssp010_spi_3: pinctrl_ftssp010_spi_3 {
 			scu010,function = <LEO_MUX_FTSSP010_SPI_3>;
+			scu010,pins = <
+				LEO_PIN_X_LC_DATA_18
+				LEO_PIN_X_LC_DATA_19
+				LEO_PIN_X_SPI_DCX2
+			>;
 		};
 		
 		pinctrl_ftssp010_spi_4: pinctrl_ftssp010_spi_4 {
 			scu010,function = <LEO_MUX_FTSSP010_SPI_4>;
+			scu010,pins = <
+				LEO_PIN_X_LC_DATA_20
+				LEO_PIN_X_LC_DATA_21
+				LEO_PIN_X_LC_DATA_22
+				LEO_PIN_X_LC_DATA_23
+				LEO_PIN_X_SPI_DCX1
+			>;
 		};
 		
 		pinctrl_ftssp010_spi_5: pinctrl_ftssp010_spi_5 {
 			scu010,function = <LEO_MUX_FTSSP010_SPI_5>;
+			scu010,pins = <
+				LEO_PIN_X_SPI_DCX2
+			>;
 		};
 		
 		pinctrl_ftssp010_spi_6: pinctrl_ftssp010_spi_6 {
 			scu010,function = <LEO_MUX_FTSSP010_SPI_6>;
+			scu010,pins = <
+				LEO_PIN_X_EMMC1_CMD
+				LEO_PIN_X_EMMC1_RSTN
+				LEO_PIN_X_SPI_DCX1
+			>;
 		};
 		
 		pinctrl_ftuart010_4: pinctrl_ftuart010_4 {
 			scu010,function = <LEO_MUX_FTUART010_4>;
+			scu010,pins = <
+				LEO_PIN_X_EMMC1_D0
+				LEO_PIN_X_EMMC1_D1
+				LEO_PIN_X_LC_DATA_10
+				LEO_PIN_X_LC_DATA_11
+			>;
 		};
 		
 		pinctrl_ftuart010_5: pinctrl_ftuart010_5 {
 			scu010,function = <LEO_MUX_FTUART010_5>;
+			scu010,pins = <
+				LEO_PIN_X_UART5_RX
+				LEO_PIN_X_UART5_RX_h
+				LEO_PIN_X_UART5_TX
+			>;
 		};
 		
 		pinctrl_ftuart010_6: pinctrl_ftuart010_6 {
 			scu010,function = <LEO_MUX_FTUART010_6>;
+			scu010,pins = <
+				LEO_PIN_X_UART6_RX
+				LEO_PIN_X_UART6_TX
+			>;
 		};
 		
 		pinctrl_ftuart010_7: pinctrl_ftuart010_7 {
 			scu010,function = <LEO_MUX_FTUART010_7>;
+			scu010,pins = <
+				LEO_PIN_X_UART7_RX
+				LEO_PIN_X_UART7_TX
+			>;
 		};
 		
 		pinctrl_ftuart010_8: pinctrl_ftuart010_8 {
 			scu010,function = <LEO_MUX_FTUART010_8>;
+			scu010,pins = <
+				LEO_PIN_X_UART8_RX
+				LEO_PIN_X_UART8_RX_h
+				LEO_PIN_X_UART8_TX
+			>;
 		};
 		
 		pinctrl_ftuart010_9: pinctrl_ftuart010_9 {
 			scu010,function = <LEO_MUX_FTUART010_9>;
+			scu010,pins = <
+				LEO_PIN_X_UART9_RX
+				LEO_PIN_X_UART9_TX
+			>;
 		};
 	};
 	
@@ -532,12 +972,7 @@
 		#size-cells = <1>;
 		compatible = "simple-bus";
 		ranges;
-
-		m33_rproc: m33@50100000 {
-			compatible = "smartchip,scm801-m33"; 
-			reg = <0x50100000 0x20000>;
-		};	
-
+		
 		gic: interrupt-controller@70000000 {
 			compatible = "arm,cortex-a7-gic";
 			interrupt-controller;
@@ -547,6 +982,7 @@
 			      <0x70004000 0x2000>,
 			      <0x70006000 0x2000>;
 		};
+
 		cpufreq0: cpufreq@28000000 {
 			compatible = "faraday,faraday-cpufreq";
 			interrupt-parent = <&gic>;
@@ -559,38 +995,44 @@
 			clock-names = "cpu";
 			operating-points = <
 				/* KHz	  uV */
-				100000 1100000
-				200000 1100000
-				400000 1100000
-				800000 1100000
+				1025000  1212500
+				1025000  1212500
+				1025000  1212500
+				1025000  1212500
+				1025000  1212500
+			>;
+			pmic-i2cnum = <0>;
+			scm701d,operating-points = <
+				/* KHz	  uV */
+
+				1025000  1212500
+				1025000  1212500
+				1025000  1212500
+				1025000  1212500
+				1025000  1212500
 			>;
 			status = "okay";
+
+			/* cooling options */
+			cooling-min-level = <0>;
+			cooling-max-level = <4>;
+			#cooling-cells = <2>; /* min followed by max */
 		};
 
-		scm701_watchdog {
-				compatible = "scm701-watchdog";
-				gpios = <&gpio0 27 1
-					 &gpio0 0 1>;
-				//status = "ok";  //zg-20200910
-				status = "disable";
+
+		scm701_otp {
+				compatible = "scm701-otp";
+				status = "okay";
 		};
 
 		efuse0@22000000 {
-                	compatible = "faraday,ftc-efuse";
-                	interrupt-parent = <&gic>;
+	                compatible = "faraday,ftc-efuse";
+        	        interrupt-parent = <&gic>;
                 	reg = <0x22000000 0x10000>;
-               	        efuse-size = <512>;   /* 4096 bits */
-               		 status = "okay";
+	                efuse-size = <512>;   /* 4096 bits */
+        	        status = "okay";
         	};
 
-		rtc: rtc@28000000{	
-			compatible = "smartchip,scm801-rtc";
-			//interrupt-parent = <&gic>;
-			//interrupts = <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
-			reg = <0x28000000 0x1000>;
-			status = "okay";
-		};
-		
 		uart0: uart@54e00000 {
 			compatible = "of_serial", "ns16550a";
 			interrupt-parent = <&gic>;
@@ -602,7 +1044,7 @@
 			no-loopback-test;
 			interrupts = <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
 			serial = <0>;
-			status = "okay";
+			status = "ok";
 		};
 		
 		uart1: uart@54f00000 {
@@ -616,7 +1058,7 @@
 			no-loopback-test;
 			interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
 			serial = <1>;
-			status = "okay";
+			status = "disabled";
 		};
 		
 		uart2: uart@55000000 {
@@ -630,8 +1072,6 @@
 			no-loopback-test;
 			interrupts = <GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
 			serial = <2>;
-			rs485-dir-gpios = <19>;
-			led-gpios = <8>;
 			status = "disabled";
 		};
 		
@@ -664,8 +1104,6 @@
 			pinctrl-0 = <&pinctrl_ftuart010_4>;
 			pinctrl-names = "sleep";
 			serial = <4>;
-			rs485-dir-gpios = <25>;
-			led-gpios = <2>;
 			status = "disabled";
 		};
 		
@@ -720,13 +1158,8 @@
 		uart8: uart_sir@56c00000 {
 			compatible = "faraday,ftuart010_sir";
 			interrupt-parent = <&gic>;
-			clock-frequency = <58823529>;
 			reg = <0x56c00000 0x1000>;
 			interrupts = <GIC_SPI 61 IRQ_TYPE_LEVEL_HIGH>;
-			 reg-offset = <0>;
-                        reg-shift = <2>;
-                        reg-io-width = <4>;
-                        no-loopback-test;
 			baud = <115200>;
 			clock-names = "irda";
 			clocks = <&irdaclk>;
@@ -845,7 +1278,7 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54400000 0x1000>;
 			interrupts = <GIC_SPI 76 IRQ_TYPE_LEVEL_HIGH>;
-			status = "okay";
+			status = "disabled";
 		};
 		
 		tdc0: thermal@54500000 {
@@ -853,7 +1286,18 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54500000 0x1000>;
 			interrupts = <GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>;
+			cooling-maps = <
+ 				/* start cooling, stop cooling, frequency kHz, cpu cores */
+
+				0    0       1025000   4  /* first line is default */
+				95   90      1025000   4  /* first line is default */
+				105  100     1025000   4  /* first line is default */
+				115  110     1025000   4  /* first line is default */
+
+ 			>;
+			thermal-critical-trips = <125>;
 			status = "okay";
+			#thermal-sensor-cells = <0>;
 		};
 		
 		dma0: ftdmac030@28500000 {
@@ -875,7 +1319,7 @@
 			interrupts = <GIC_SPI 119 IRQ_TYPE_LEVEL_HIGH>;
 			status = "okay";
 		};
-		
+
 		spi0: spinor@12000000 {
 			compatible = "faraday,ftspi020-nor";
 			interrupt-parent = <&gic>;
@@ -886,22 +1330,47 @@
 			clock-names = "spiclk";
 			status = "okay";
 		};
+
+		/* spi half-duplex; */
+		/* spi spi-slave; */
+		
+		/*
+			dma-switch mode
+			
+			mode0:ssp0 ssp1
+			mode1:ssp2 ssp3
+			mode2:ssp4 ssp5
+			mode3:ssp6
+		*/
+
+		scm701d_dma_switch {
+				compatible = "scm701d-dma-switch";
+				mode  = <2>; /* mode2:ssp4 ssp5 */
+				status = "disabled";
+		};
+
+		/*
+			ssp7 doesn't have DMA
+			ssp0~6 have DMA
+		*/
 		
 		ssp0: spi@54b00000 {
 			compatible = "faraday,ftssp010-spi";
 			interrupt-parent = <&gic>;
 			reg = <0x54b00000 0x1000>;
 			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>;
+//			dmas = <&dma0 0 0xFF 12>, <&dma0 0 0xFF 13>;        /* DMAC030 - mode0*/
+//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
-			//pinctrl-0 = <&pinctrl_ftssp010_spi>;
-			//pinctrl-names = "sleep";
-			dev_id = <0>;
-			status = "okay";
+			pinctrl-0 = <&pinctrl_ftssp010_spi>;
+			pinctrl-names = "sleep";
+			dev_id = <0>;//禁止改动
+			status = "disabled";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev0 {
+			spidev@0x00 {
 				compatible = "rohm,dh2228fv";
 				spi-max-frequency = <20000000>;
 				reg = <0>;
@@ -913,21 +1382,22 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54c00000 0x1000>;
 			interrupts = <GIC_SPI 13 IRQ_TYPE_LEVEL_HIGH>;
+//			dmas = <&dma0 0 0xFF 14>, <&dma0 0 0xFF 15>;        /* DMAC030 - mode0*/
+//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_1>;
 			pinctrl-names = "sleep";
-			dev_id = <1>;
+			dev_id = <1>;//禁止改动
 			status = "disabled";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev1 {
-				compatible = "rohm,dh2228fv";
+			spidev@0x00 {
+				compatible = "rohm,dh2228fv";	
 				spi-max-frequency = <20000000>;
 				reg = <0>;
 			};
-			
 		};
 		
 		ssp2: spi@54d00000 {
@@ -935,6 +1405,8 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54d00000 0x1000>;
 			interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
+//			dmas = <&dma0 0 0xFF 12>, <&dma0 0 0xFF 13>;        /* DMAC030 - mode1*/
+//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_2>;
@@ -944,10 +1416,9 @@
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev2 {
+			spidev@0x00 {
 				compatible = "rohm,dh2228fv";
 				spi-max-frequency = <20000000>;
-				tmp-num = <1>;
 				reg = <0>;
 			};
 		};
@@ -955,21 +1426,25 @@
 		ssp3: spi@56500000 {
 			compatible = "faraday,ftssp010-spi";
 			interrupt-parent = <&gic>;
-			spi-slave;
 			reg = <0x56500000 0x1000>;
 			interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
+//			dmas = <&dma0 1 0xFF 14>, <&dma0 1 0xFF 15>;        /* DMAC030 - mode1*/
+//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_3>;
 			pinctrl-names = "sleep";
 			dev_id = <3>;
-			status = "disabled";
+			half-duplex;
+			status = "okay";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev3: slave {
-				compatible = "rohm,dh2228fv";
+			sc1187y@0x00 {
+				compatible = "sc1187y";
 				spi-max-frequency = <20000000>;
+				spi-cpol;
+				spi-cpha;
 				reg = <0>;
 			};
 		};
@@ -979,16 +1454,18 @@
 			interrupt-parent = <&gic>;
 			reg = <0x56600000 0x1000>;
 			interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
+//			dmas = <&dma0 1 0xFF 12>, <&dma0 1 0xFF 13>;        /* DMAC030_1 - mode2*/
+//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_4>;
 			pinctrl-names = "sleep";
-			dev_id = <4>;
-			status = "disabled";
+			dev_id = <4>;  /*<2> spidev4.0*/
+			status = "okay";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev4 {
+			spidev4 /*spidev@0x00*/ {
 				compatible = "rohm,dh2228fv";
 				spi-max-frequency = <20000000>;
 				reg = <0>;
@@ -998,39 +1475,33 @@
 		ssp5: spi@56700000 {
 			compatible = "faraday,ftssp010-spi";
 			interrupt-parent = <&gic>;
-			//spi-slave;
 			reg = <0x56700000 0x1000>;
 			interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
+//			dmas = <&dma0 1 0xFF 14>, <&dma0 1 0xFF 15>;        /* DMAC030_1 - mode2*/
+//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_5>;
-			pinctrl-names = "default";
+			pinctrl-names = "sleep";
 			dev_id = <5>;
 			status = "disabled";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			esam {
-                                compatible = "smartchip,esam";
-                                spi-max-frequency = <20000>;
-				gpio_ctrl = <29>;
-                                reg = <0>; 
-                        };
-			/*
-				spidev5: slave {
-					compatible = "rohm,dh2228fv";
-					spi-max-frequency = <20000000>;
-					reg = <0>;
-				};
-			*/
+			spidev@0x00 {
+				compatible = "rohm,dh2228fv";
+				spi-max-frequency = <20000000>;
+				reg = <0>;
+			};
 		};
 		
 		ssp6: spi@56800000 {
 			compatible = "faraday,ftssp010-spi";
 			interrupt-parent = <&gic>;
-			spi-slave;
 			reg = <0x56800000 0x1000>;
 			interrupts = <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>;
+//			dmas = <&dma0 1 0xFF 8>, <&dma0 1 0xFF 9>;    /* DMAC030_1 - mode3*/
+//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_6>;
@@ -1040,7 +1511,7 @@
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev6: slave {
+			spidev@0x00 {
 				compatible = "rohm,dh2228fv";
 				spi-max-frequency = <20000000>;
 				reg = <0>;
@@ -1055,14 +1526,16 @@
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			dev_id = <7>;
-			status = "disabled";
+			half-duplex;
+			status = "okay";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev7 {
-				compatible = "rohm,dh2228fv";
+			sc1168y@0x00 {
+				compatible = "sc1168y";
 				spi-max-frequency = <20000000>;
-				tmp-num = <77>;
+				spi-cpol;
+				spi-cpha;
 				reg = <0>;
 			};
 		}; 
@@ -1078,12 +1551,10 @@
 			pinctrl-names = "default";
 			interrupts = <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>;
 			status = "ok";
-     			/*	
-				fixed-link { 
-           				speed = <1000>;
-		  	        	full-duplex;
-		        	};
-			*/
+     			fixed-link { 
+           			speed = <1000>;
+		  	        full-duplex;
+		        };
 		};
 		
 		gmac1: gmac@542000000 {
@@ -1093,16 +1564,8 @@
 			reg = <0x54200000 0x1000>;
 			clocks = <&gmacclk>;
 			clock-names = "gmacclk";
-			
-			pinctrl-0 = <&pinctrl_ftgmac030_rmii>;
-                        pinctrl-names = "default";
-
 			interrupts = <GIC_SPI 8 IRQ_TYPE_LEVEL_HIGH>;
-			status = "ok";
-                        fixed-link { 
-                                speed = <100>;
-                                full-duplex;
-                        };
+			status = "disabled";
 		};
 		
 		gmac2: gmac@543000000 {
@@ -1112,16 +1575,8 @@
 			reg = <0x54300000 0x1000>;
 			clocks = <&gmacclk>;
 			clock-names = "gmacclk";
-
-			pinctrl-0 = <&pinctrl_ftgmac030_mii>;
-                        pinctrl-names = "default";			
-
 			interrupts = <GIC_SPI 9 IRQ_TYPE_LEVEL_HIGH>;
-			status = "ok";
-                        fixed-link {
-                                speed = <100>;
-                                full-duplex;
-                        };
+			status = "disabled";
 		};
 		
 		can0: can@56300000 {
@@ -1132,7 +1587,7 @@
 			clock-frequency = <100000000>;
 			pinctrl-0 = <&pinctrl_ftcan010>;
 			pinctrl-names = "default";
-			status = "okay";
+			status = "disabled";
 		};
 		
 		can1: can@54900000 {
@@ -1143,7 +1598,7 @@
 			clock-frequency = <100000000>; 
 			pinctrl-0 = <&pinctrl_ftcan010_1>;
 			pinctrl-names = "default";
-			status = "okay";
+			status = "disabled";
 		};
 		
 		usb0: usb_hcd@10200000 {
@@ -1152,7 +1607,7 @@
 			reg = <0x10200000 0x1000>;
 			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>;
 			mini-A-plug;
-			status = "okay";
+			status = "disabled";
 		};
 		
 		usb1: usb_udc@10200000 {
@@ -1160,7 +1615,7 @@
 			interrupt-parent = <&gic>;
 			reg = <0x10200000 0x1000>;
 			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>;
-			status = "disabled";
+			status = "okay";
 		};
 		
 		usb2: usb_hcd@10300000 {
@@ -1186,7 +1641,7 @@
 			reg = <0x10400000 0x1000>;
 			interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
 			mini-A-plug;
-			status = "okay";
+			status = "disabled";
 		};
 		
 		usb5: usb_udc@10400000 {
@@ -1232,7 +1687,7 @@
 			interrupt-parent = <&gic>;
 			reg = <0x28300000 0x100000>;
 			interrupts = <GIC_SPI 95 IRQ_TYPE_LEVEL_HIGH>;
-			status = "okay";
+			status = "disabled";
 		};
 		
 		trng0: trng@28400000 {
@@ -1240,7 +1695,7 @@
 			interrupt-parent = <&gic>;
 			reg = <0x28400000 0x100>;
 			interrupts = <GIC_SPI 94 IRQ_TYPE_LEVEL_HIGH>;
-			status = "okay";
+			status = "disabled";
 		};
 		
 		pwm0: pwm@55300000 {
@@ -1299,7 +1754,7 @@
 			interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			status = "disabled"; 
+			status = "okay";
 		};
 		
 		i2c1: i2c@55600000 {
@@ -1312,19 +1767,12 @@
 			interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			status = "okay";
-			at24c08@50{
-				 compatible = "atmel,eeprom";
-				 reg = <0x50>;
-				 interrupts = <7 1>;
-				 interrupts-parent = <&gic>;
-			};
-			/*rtc@32 {
+			status = "disabled";
+			rtc@32 {
 				compatible = "epson,rx8025";
 				reg = <0x32>;
-				interrupts = <7 1>;
-				interrupt-parent = <&gic>;
-			};*/
+				second_interrput = <&gpio1 26 GPIO_ACTIVE_LOW>; 
+			};
 		};
 		
 		i2c2: i2c@55700000 {
@@ -1355,9 +1803,8 @@
 			interrupts = <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			phy-reset-gpios = <45>;
-			enable-single-LED-mode;
-			status = "diabled";
+			status = "ok";
+		
 		};
 		
 		i2c4: i2c@57000000 {
@@ -1370,7 +1817,7 @@
 			clock-names = "pclk";
 			pinctrl-0 = <&pinctrl_ftiic010_4>;
 			pinctrl-names = "default";
-			status = "diabled";
+			status = "disabled";
 		};
 		
 		gpio0: gpio@54000000 {
@@ -1383,7 +1830,7 @@
 			interrupts = <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
 			pinctrl-0 = <&pinctrl_ftgpio010>;
 			pinctrl-names = "default";
-		//	pin-mux-modex;
+			pin-mux-modex;
 			status = "okay";
 		};
 		
@@ -1399,48 +1846,15 @@
 			pinctrl-names = "default";
 			status = "okay";
 		};
-		gpio_keys {
-            		//compatible = "gpio-keys";
-			compatible = "smartchip,scm801-keypad";
-			btn0{
-                   		 label = "key0";
-                   		 gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
-                   		 linux,code = <KEY_L>;
-                  		 //wakeup-source;
-               		 };
-           		btn1{
-				label = "key1";
-                   		gpios = <&gpio0 25 GPIO_ACTIVE_LOW>;
-                    		linux,code = <KEY_S>;
-                  		 //wakeup-source;
-                	};
-
-           		/*
-           		 btn0 {
-                   		 label = "Button0";
-                   		 gpios = <&gpio1 29 GPIO_ACTIVE_LOW>;
-                   		 linux,code = <0x100>;
-                   		 //wakeup-source;
-           		 };
-			btn1 {
-                   		 label = "Button1";
-                   		 gpios = <&gpio1 28 GPIO_ACTIVE_LOW>;
-                   		 linux,code = <0x101>;
-                   		 //wakeup-source;
-           		 };
-			btn2 {
-                   		label = "Button2";
-                   		gpios = <&gpio1 2 GPIO_ACTIVE_LOW>;
-                    		linux,code = <0x102>;
-                   		//wakeup-source;
-           		 };
-			btn3 {
-                   		 label = "Button3";
-                   		 gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
-                   		 linux,code = <0x103>;
-                    		//wakeup-source;
-           		 }; */
-    		};
+		
+	
+		gpio-restart {
+			compatible = "gpio-restart";
+			gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
+			active-delay = <1000>;
+			priority = <200>;
+			status = "disabled";
+		};
 
 		kbc0: kbc@56100000 {
 			compatible = "faraday,ftkbc010";

@@ -21,6 +21,15 @@ config PINCTRL_LEO
 if PINCTRL_LEO
 	config PINCTRL_LEO_MODEX
 	bool "Enable ModeX"
+	
+	config PINCTRL_LEO_RGMII
+        bool "Enable Rgmii"
+
+	config PINCTRL_LEO_RMII
+        bool "Enable Rmii"
+	
+	config PINCTRL_LEO_MII
+        bool "Enable Mii"
 endif
 
 endif
