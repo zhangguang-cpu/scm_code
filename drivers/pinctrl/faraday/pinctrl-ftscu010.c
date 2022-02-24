@@ -112,11 +112,11 @@ static int ftscu010_pinctrl_dt_node_to_group(
 
 	soc->groups[func].npins = size;
 
-	dev_info(pmx->dev, "Change soc->groups[%d].npins:%d\n",func, soc->groups[func].npins);
+	//dev_info(pmx->dev, "Change soc->groups[%d].npins:%d\n",func, soc->groups[func].npins);
 
 	for (i = 0; i < size; i++) {
 		soc->groups[func].pins[i] = be32_to_cpu(*list++);
-		dev_info(pmx->dev, "soc->groups[%d].pins[%d]:%d\n",func, i, soc->groups[func].pins[i]);
+		//dev_info(pmx->dev, "soc->groups[%d].pins[%d]:%d\n",func, i, soc->groups[func].pins[i]);
 	}
        function = of_find_property(np, "scu010,schmitt-trigger", NULL)
 ;
@@ -163,10 +163,10 @@ static int ftscu010_pinctrl_dt_node_to_map(struct pinctrl_dev *pctldev,
 	new_map[0].type = PIN_MAP_TYPE_MUX_GROUP;
 	new_map[0].data.mux.function = pmx->soc->functions[func].name;
 	new_map[0].data.mux.group = NULL;
-
+#if 0
 	dev_info(pmx->dev, "maps: function %s(#%d) group %s num %d\n",
 		 (*map)->data.mux.function, func, (*map)->data.mux.group, map_num);
-
+#endif
 	return 0;
 }
 
@@ -250,11 +250,12 @@ static void ftscu010_pinctrl_setup(struct pinctrl_dev *pctldev,
 	const struct ftscu010_pin_group *group;
 	int i, npins;
 	unsigned int schmitt_trigger = 0;
+#if 0
 	dev_info(pmx->dev, "setup: %s function %s(#%d) group %s(#%d)\n",
 		enable ? "enable" : "disable",
 		soc->functions[selector].name, selector,
 		soc->groups[gselector].name, gselector);
-
+#endif
 	group = &pmx->soc->groups[gselector];
 	npins = group->npins;
 	if(group->schmitt_trigger) {
@@ -279,10 +280,11 @@ static void ftscu010_pinctrl_setup(struct pinctrl_dev *pctldev,
 		if (enable)
 			val |= ftscu010_pinmux_setting(pin, selector) << shift;
 		writel(val, pmx->base + pin->offset);
-
+#if 0
 		printk("val:%x, addr:%x, shift:%d, selector:%d\n",
 			val, (volatile u32 __force *)(pmx->base + pin->offset),
 			shift, selector);
+#endif
 	}
 
 }
@@ -332,8 +334,9 @@ static void ftscu010_pinctrl_dt_node_to_modex(
 	for (i = 0; i < size; i++) {
 		value |= be32_to_cpu(*list++);
 	}
+#if 0
 	dev_info(pmx->dev, "scu010,modex value:%x\n", value);
-
+#endif
 	writel(value, (void __iomem *)PLAT_SCU_VA_BASE + 0x8204);
 
 }

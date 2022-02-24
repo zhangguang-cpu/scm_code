@@ -93,7 +93,7 @@
 	
 	timer {
 		compatible = "arm,armv7-timer";
-		clock-frequency = <1025000000>;  /* kernel default cpu frequency */
+		clock-frequency = <800000000>;  /* kernel default cpu frequency */
 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
 		             <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
 		             <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
@@ -106,9 +106,10 @@
 	
 	chosen {
 		bootargs = "mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000 root=/dev/mmcblk0p2 rw init=/sbin/init rootfstype=ext4";
-               //bootargs = "mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000 root=/dev/mmcblk0p2 rw init=/linuxrc rootfstype=ext4";
-               //bootargs = "root=/dev/nfs   nfsroot=192.168.0.2:/home/niubin/rootfs,vers=3 ip=192.168.0.80:192.168.0.2:192.168.0.1:255.255.255.0::eth0:off init=/linuxrc mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000";
-	       //bootargs = "mem=2048M console=ttyS0,115200 root=/dev/mmcblk0p7 earlycon=uart8250,mmio32,0x54e00000";
+#if 0
+                bootargs = "mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000 root=/dev/mmcblk0p2 rw init=/linuxrc rootfstype=ext4";
+               bootargs = "root=/dev/nfs   nfsroot=192.168.0.2:/home/niubin/rootfs,vers=3 ip=192.168.0.80:192.168.0.2:192.168.0.1:255.255.255.0::eth0:off init=/linuxrc mem=2048M console=ttyS0,115200 earlycon=uart8250,mmio32,0x54e00000";
+#endif
 	};
 	
 	clocks {
@@ -405,30 +406,6 @@
 		};
 	};
 
-	scu {
-		compatible = "scm701d-scu";
-		status = "okay";
-
-		pll,control = <
-			PLL0_CONTROL_EN		// CA7 /* always onlive */
-			PLL1_CONTROL_EN		// MAC/OTG/SPI/SDC/AES/SHA/SCU/EFUSE/TRNG/LCD
-			PLL2_CONTROL_EN		// EMC/OTG/DMA/PWM/UART
-			PLL3_CONTROL_EN		// audio  / emmc
-			PLL4_CONTROL_EN		// DDR
-			//PLL5_CONTROL_EN         // LCD
-			PLL6_CONTROL_EN		// SPI/PWM/IIC/UART/GPIO/WDT/CAN/KBC/M33/DMA
-			PLL7_CONTROL_EN		// EMMC
-		>;
-
-		AHB,control = <
-			//AHB_CM33_DMAC_HCLK_EN
-			//AHB_CM33_CPU_HCLK_EN
-			//AHB_SPI2AHB_HCLK_EN	
-			//AHB_CRYPT_HCLK_EN	
-			//AHB_EMMC1_HCLK_EN	
-			AHB_EMMC0_HCLK_EN	
-		>;
-	};
 
 	pinctrl {
 		compatible = "ftscu010-pinmux", "pinctrl-leo";
@@ -510,7 +487,7 @@
 			scu010,pins = <
 				LEO_PIN_X_RGMII_GTX_CK
 				LEO_PIN_X_RGMII_MDC
-				//LEO_PIN_X_RGMII_MDIO
+				LEO_PIN_X_RGMII_MDIO
 				LEO_PIN_X_RGMII_RXCTL
 				LEO_PIN_X_RGMII_RXD_0
 				LEO_PIN_X_RGMII_RXD_1
@@ -995,34 +972,12 @@
 			clock-names = "cpu";
 			operating-points = <
 				/* KHz	  uV */
-				1025000  1212500
-				1025000  1212500
-				1025000  1212500
-				1025000  1212500
-				1025000  1212500
-			>;
-			pmic-i2cnum = <0>;
-			scm701d,operating-points = <
-				/* KHz	  uV */
-
-				1025000  1212500
-				1025000  1212500
-				1025000  1212500
-				1025000  1212500
-				1025000  1212500
+				100000 1100000
+				200000 1100000
+				400000 1100000
+				800000 1100000
 			>;
 			status = "okay";
-
-			/* cooling options */
-			cooling-min-level = <0>;
-			cooling-max-level = <4>;
-			#cooling-cells = <2>; /* min followed by max */
-		};
-
-
-		scm701_otp {
-				compatible = "scm701-otp";
-				status = "okay";
 		};
 
 		efuse0@22000000 {
@@ -1044,7 +999,7 @@
 			no-loopback-test;
 			interrupts = <GIC_SPI 45 IRQ_TYPE_LEVEL_HIGH>;
 			serial = <0>;
-			status = "ok";
+			status = "okay";
 		};
 		
 		uart1: uart@54f00000 {
@@ -1058,7 +1013,7 @@
 			no-loopback-test;
 			interrupts = <GIC_SPI 47 IRQ_TYPE_LEVEL_HIGH>;
 			serial = <1>;
-			status = "disabled";
+			status = "okay";
 		};
 		
 		uart2: uart@55000000 {
@@ -1278,7 +1233,7 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54400000 0x1000>;
 			interrupts = <GIC_SPI 76 IRQ_TYPE_LEVEL_HIGH>;
-			status = "disabled";
+			status = "okay";
 		};
 		
 		tdc0: thermal@54500000 {
@@ -1286,18 +1241,7 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54500000 0x1000>;
 			interrupts = <GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>;
-			cooling-maps = <
- 				/* start cooling, stop cooling, frequency kHz, cpu cores */
-
-				0    0       1025000   4  /* first line is default */
-				95   90      1025000   4  /* first line is default */
-				105  100     1025000   4  /* first line is default */
-				115  110     1025000   4  /* first line is default */
-
- 			>;
-			thermal-critical-trips = <125>;
 			status = "okay";
-			#thermal-sensor-cells = <0>;
 		};
 		
 		dma0: ftdmac030@28500000 {
@@ -1331,40 +1275,18 @@
 			status = "okay";
 		};
 
-		/* spi half-duplex; */
-		/* spi spi-slave; */
-		
-		/*
-			dma-switch mode
-			
-			mode0:ssp0 ssp1
-			mode1:ssp2 ssp3
-			mode2:ssp4 ssp5
-			mode3:ssp6
-		*/
 
-		scm701d_dma_switch {
-				compatible = "scm701d-dma-switch";
-				mode  = <2>; /* mode2:ssp4 ssp5 */
-				status = "disabled";
-		};
-
-		/*
-			ssp7 doesn't have DMA
-			ssp0~6 have DMA
-		*/
-		
 		ssp0: spi@54b00000 {
 			compatible = "faraday,ftssp010-spi";
 			interrupt-parent = <&gic>;
 			reg = <0x54b00000 0x1000>;
 			interrupts = <GIC_SPI 12 IRQ_TYPE_LEVEL_HIGH>;
-//			dmas = <&dma0 0 0xFF 12>, <&dma0 0 0xFF 13>;        /* DMAC030 - mode0*/
-//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
+#if 0
 			pinctrl-0 = <&pinctrl_ftssp010_spi>;
 			pinctrl-names = "sleep";
+#endif
 			dev_id = <0>;//禁止改动
 			status = "disabled";
 			
@@ -1382,8 +1304,6 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54c00000 0x1000>;
 			interrupts = <GIC_SPI 13 IRQ_TYPE_LEVEL_HIGH>;
-//			dmas = <&dma0 0 0xFF 14>, <&dma0 0 0xFF 15>;        /* DMAC030 - mode0*/
-//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_1>;
@@ -1405,8 +1325,6 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54d00000 0x1000>;
 			interrupts = <GIC_SPI 14 IRQ_TYPE_LEVEL_HIGH>;
-//			dmas = <&dma0 0 0xFF 12>, <&dma0 0 0xFF 13>;        /* DMAC030 - mode1*/
-//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_2>;
@@ -1428,23 +1346,19 @@
 			interrupt-parent = <&gic>;
 			reg = <0x56500000 0x1000>;
 			interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
-//			dmas = <&dma0 1 0xFF 14>, <&dma0 1 0xFF 15>;        /* DMAC030 - mode1*/
-//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_3>;
 			pinctrl-names = "sleep";
 			dev_id = <3>;
 			half-duplex;
-			status = "okay";
+			status = "disabled";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			sc1187y@0x00 {
-				compatible = "sc1187y";
+			spidev@0x00 {
+				compatible = "rohm,dh2228fv";
 				spi-max-frequency = <20000000>;
-				spi-cpol;
-				spi-cpha;
 				reg = <0>;
 			};
 		};
@@ -1454,18 +1368,16 @@
 			interrupt-parent = <&gic>;
 			reg = <0x56600000 0x1000>;
 			interrupts = <GIC_SPI 16 IRQ_TYPE_LEVEL_HIGH>;
-//			dmas = <&dma0 1 0xFF 12>, <&dma0 1 0xFF 13>;        /* DMAC030_1 - mode2*/
-//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_4>;
 			pinctrl-names = "sleep";
 			dev_id = <4>;  /*<2> spidev4.0*/
-			status = "okay";
+			status = "disabled";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
-			spidev4 /*spidev@0x00*/ {
+			spidev@0x00 {
 				compatible = "rohm,dh2228fv";
 				spi-max-frequency = <20000000>;
 				reg = <0>;
@@ -1477,12 +1389,10 @@
 			interrupt-parent = <&gic>;
 			reg = <0x56700000 0x1000>;
 			interrupts = <GIC_SPI 17 IRQ_TYPE_LEVEL_HIGH>;
-//			dmas = <&dma0 1 0xFF 14>, <&dma0 1 0xFF 15>;        /* DMAC030_1 - mode2*/
-//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_5>;
-			pinctrl-names = "sleep";
+			pinctrl-names = "default";
 			dev_id = <5>;
 			status = "disabled";
 			
@@ -1500,8 +1410,6 @@
 			interrupt-parent = <&gic>;
 			reg = <0x56800000 0x1000>;
 			interrupts = <GIC_SPI 18 IRQ_TYPE_LEVEL_HIGH>;
-//			dmas = <&dma0 1 0xFF 8>, <&dma0 1 0xFF 9>;    /* DMAC030_1 - mode3*/
-//			dma-names = "tx", "rx";
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			pinctrl-0 = <&pinctrl_ftssp010_spi_6>;
@@ -1526,11 +1434,16 @@
 			clocks = <&sspclk>;
 			clock-names = "sspclk";
 			dev_id = <7>;
-			half-duplex;
-			status = "okay";
+			status = "disabled";
 			
 			#address-cells = <1>;
 			#size-cells = <0>;
+			spidev@0x00 {
+				compatible = "rohm,dh2228fv";
+				spi-max-frequency = <20000000>;
+				reg = <0>;
+			};
+#if 0
 			sc1168y@0x00 {
 				compatible = "sc1168y";
 				spi-max-frequency = <20000000>;
@@ -1538,6 +1451,7 @@
 				spi-cpha;
 				reg = <0>;
 			};
+#endif
 		}; 
 		
 		gmac0: gmac@541000000 {
@@ -1550,11 +1464,13 @@
 			pinctrl-0 = <&pinctrl_ftgmac030_rgmii>;
 			pinctrl-names = "default";
 			interrupts = <GIC_SPI 7 IRQ_TYPE_LEVEL_HIGH>;
-			status = "ok";
+			status = "okay";
+#if 0
      			fixed-link { 
            			speed = <1000>;
 		  	        full-duplex;
 		        };
+#endif
 		};
 		
 		gmac1: gmac@542000000 {
@@ -1564,8 +1480,14 @@
 			reg = <0x54200000 0x1000>;
 			clocks = <&gmacclk>;
 			clock-names = "gmacclk";
+			pinctrl-0 = <&pinctrl_ftgmac030_rmii>;
+                        pinctrl-names = "default";
 			interrupts = <GIC_SPI 8 IRQ_TYPE_LEVEL_HIGH>;
-			status = "disabled";
+			status = "okay";
+			fixed-link { 
+           			speed = <100>;
+		  	        full-duplex;
+		        };
 		};
 		
 		gmac2: gmac@543000000 {
@@ -1575,8 +1497,14 @@
 			reg = <0x54300000 0x1000>;
 			clocks = <&gmacclk>;
 			clock-names = "gmacclk";
+			pinctrl-0 = <&pinctrl_ftgmac030_mii>;
+                        pinctrl-names = "default";
 			interrupts = <GIC_SPI 9 IRQ_TYPE_LEVEL_HIGH>;
-			status = "disabled";
+			status = "okay";
+			fixed-link { 
+           			speed = <100>;
+		  	        full-duplex;
+		        };
 		};
 		
 		can0: can@56300000 {
@@ -1587,7 +1515,7 @@
 			clock-frequency = <100000000>;
 			pinctrl-0 = <&pinctrl_ftcan010>;
 			pinctrl-names = "default";
-			status = "disabled";
+			status = "okay";
 		};
 		
 		can1: can@54900000 {
@@ -1598,7 +1526,7 @@
 			clock-frequency = <100000000>; 
 			pinctrl-0 = <&pinctrl_ftcan010_1>;
 			pinctrl-names = "default";
-			status = "disabled";
+			status = "okay";
 		};
 		
 		usb0: usb_hcd@10200000 {
@@ -1607,7 +1535,7 @@
 			reg = <0x10200000 0x1000>;
 			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>;
 			mini-A-plug;
-			status = "disabled";
+			status = "okay";
 		};
 		
 		usb1: usb_udc@10200000 {
@@ -1615,7 +1543,7 @@
 			interrupt-parent = <&gic>;
 			reg = <0x10200000 0x1000>;
 			interrupts = <GIC_SPI 81 IRQ_TYPE_LEVEL_HIGH>;
-			status = "okay";
+			status = "disabled";
 		};
 		
 		usb2: usb_hcd@10300000 {
@@ -1641,7 +1569,7 @@
 			reg = <0x10400000 0x1000>;
 			interrupts = <GIC_SPI 83 IRQ_TYPE_LEVEL_HIGH>;
 			mini-A-plug;
-			status = "disabled";
+			status = "okay";
 		};
 		
 		usb5: usb_udc@10400000 {
@@ -1754,7 +1682,7 @@
 			interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			status = "okay";
+			status = "disabled";
 		};
 		
 		i2c1: i2c@55600000 {
@@ -1768,11 +1696,19 @@
 			clocks = <&pclk>;
 			clock-names = "pclk";
 			status = "disabled";
+			at24c08@50{
+				 compatible = "atmel,eeprom";
+				 reg = <0x50>;
+				 interrupts = <7 1>;
+				 interrupts-parent = <&gic>;
+			};
+#if 0                     
 			rtc@32 {
 				compatible = "epson,rx8025";
 				reg = <0x32>;
 				second_interrput = <&gpio1 26 GPIO_ACTIVE_LOW>; 
 			};
+#endif
 		};
 		
 		i2c2: i2c@55700000 {
@@ -1830,7 +1766,9 @@
 			interrupts = <GIC_SPI 1 IRQ_TYPE_LEVEL_HIGH>;
 			pinctrl-0 = <&pinctrl_ftgpio010>;
 			pinctrl-names = "default";
+#if 0
 			pin-mux-modex;
+#endif
 			status = "okay";
 		};
 		
@@ -1847,14 +1785,22 @@
 			status = "okay";
 		};
 		
-	
-		gpio-restart {
-			compatible = "gpio-restart";
-			gpios = <&gpio0 3 GPIO_ACTIVE_HIGH>;
-			active-delay = <1000>;
-			priority = <200>;
-			status = "disabled";
-		};
+         	gpio_keys: gpio@0 {
+			compatible = "smartchip,scm801-keypad";
+			btn0{
+                   	 	label = "key0";
+                   	 	gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+                   	 	linux,code = <KEY_L>;
+                  	 	//wakeup-source;
+               		 };
+           		btn1{
+				label = "key1";
+                   		gpios = <&gpio0 25 GPIO_ACTIVE_LOW>;
+                    		linux,code = <KEY_S>;
+                  		 //wakeup-source;
+                	};
+
+    		};	
 
 		kbc0: kbc@56100000 {
 			compatible = "faraday,ftkbc010";
