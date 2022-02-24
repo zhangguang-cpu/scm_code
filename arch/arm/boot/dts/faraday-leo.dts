@@ -414,7 +414,9 @@
 		scu010,modex = <
 			LEO_Mode_X_GPIO0_26
 			LEO_Mode_X_GPIO0_25
+#if 0
 			LEO_Mode_X_GPIO0_24   /*X_MII_TX_EN  Bluetooth_CTS*/
+#endif 
 			LEO_Mode_X_GPIO0_23
 			LEO_Mode_X_GPIO0_22
 			//LEO_Mode_X_GPIO0_21
