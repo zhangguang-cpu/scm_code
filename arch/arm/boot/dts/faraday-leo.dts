@@ -415,15 +415,19 @@
 			LEO_Mode_X_GPIO0_26
 			LEO_Mode_X_GPIO0_25
 #if 0
-			LEO_Mode_X_GPIO0_24   /*X_MII_TX_EN  Bluetooth_CTS*/
+			LEO_Mode_X_GPIO0_24   
 #endif 
 			LEO_Mode_X_GPIO0_23
 			LEO_Mode_X_GPIO0_22
-			//LEO_Mode_X_GPIO0_21
-			//LEO_Mode_X_GPIO0_20
+#if 0
+			LEO_Mode_X_GPIO0_21
+			LEO_Mode_X_GPIO0_20
+#endif
 			LEO_Mode_X_GPIO0_19
-			//LEO_Mode_X_GPIO0_18
-			//LEO_Mode_X_GPIO0_17
+#if 0
+			LEO_Mode_X_GPIO0_18
+			LEO_Mode_X_GPIO0_17
+#endif
 			LEO_Mode_X_GPIO0_3
 			LEO_Mode_X_GPIO0_2
 		>;
@@ -1697,7 +1701,7 @@
 			interrupts = <GIC_SPI 41 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			status = "disabled";
+			status = "okay";
 			at24c08@50{
 				 compatible = "atmel,eeprom";
 				 reg = <0x50>;
@@ -1741,7 +1745,7 @@
 			interrupts = <GIC_SPI 43 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			status = "ok";
+			status = "disabled";
 		
 		};
 		
