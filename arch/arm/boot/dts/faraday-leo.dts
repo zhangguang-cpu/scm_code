@@ -421,8 +421,8 @@
 			LEO_Mode_X_GPIO0_22
 #if 0
 			LEO_Mode_X_GPIO0_21
-			LEO_Mode_X_GPIO0_20
 #endif
+			LEO_Mode_X_GPIO0_20
 			LEO_Mode_X_GPIO0_19
 #if 0
 			LEO_Mode_X_GPIO0_18
@@ -1033,7 +1033,8 @@
 			no-loopback-test;
 			interrupts = <GIC_SPI 49 IRQ_TYPE_LEVEL_HIGH>;
 			serial = <2>;
-			status = "disabled";
+			rs485-dir-gpios = <19>;
+			status = "okay";
 		};
 		
 		uart3: uart@55100000 {
@@ -1047,9 +1048,9 @@
 			no-loopback-test;
 			interrupts = <GIC_SPI 51 IRQ_TYPE_LEVEL_HIGH>;
 			serial = <3>;
-			rs485-dir-gpios = <22>;
-			led-gpios = <21>;
-			status = "disabled";
+			rs485-dir-gpios = <20>;
+			//led-gpios = <21>;
+			status = "okay";
 		};
 		
 		uart4: uart@55200000 {

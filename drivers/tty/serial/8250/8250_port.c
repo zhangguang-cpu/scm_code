@@ -1653,7 +1653,8 @@ static void serial8250_start_tx(struct uart_port *port)
 	if(port->rs485_pin >= 0) {
 		port->led_config.flag = 1;
 		port->led_config.count = 0;
-		gpio_set_value_cansleep(port->rs485_pin, 1);
+		//gpio_set_value_cansleep(port->rs485_pin, 1);
+		gpio_set_value(port->rs485_pin, 1);
 	}
 
 	serial8250_rpm_get_tx(up);
@@ -1832,7 +1833,8 @@ void serial8250_485_do_tasklet(unsigned long param)
 	udelay(20);
 
 	if(port->rs485_pin >= 0)
-		gpio_set_value_cansleep(port->rs485_pin, 0);
+		gpio_set_value(port->rs485_pin, 0);
+		//gpio_set_value_cansleep(port->rs485_pin, 0);
 }
 
 
