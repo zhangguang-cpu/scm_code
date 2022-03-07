@@ -63,6 +63,7 @@
 			reg = <0x0>;
 			/*enable-method = "psci";*/
 		};
+#if 0
 		cpu1: cpu@1 {
 			compatible = "arm,cortex-a7";
 			device_type = "cpu";
@@ -84,6 +85,7 @@
 			reg = <0x3>;
 			/*enable-method = "psci";*/
 		};
+#endif
 	};
 	
 	memory@80000000 {
