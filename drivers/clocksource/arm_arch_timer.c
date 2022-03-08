@@ -1527,6 +1527,8 @@ static int __init arch_timer_acpi_init(struct acpi_table_header *table)
 }
 TIMER_ACPI_DECLARE(arch_timer, ACPI_SIG_GTDT, arch_timer_acpi_init);
 #endif
+
+#ifdef CONFIG_ARCH_FARADAY
 static int cpufreq_freqs_notify(struct notifier_block *nb,
 				unsigned long event, void *data)
 {
@@ -1570,3 +1572,4 @@ static int arch_timer_cpufreq_notifier_init(void)
 	return ret;
 }
 late_initcall(arch_timer_cpufreq_notifier_init);
+#endif

@@ -30,6 +30,7 @@
 
 extern void __iomem *ftscu100_base;
 
+
 unsigned int leo_clk_get_pll_ns(const char *name)
 {
 	unsigned int cr;
@@ -187,7 +188,6 @@ unsigned int leo_clk_get_fastboot_div(struct device_node *np, unsigned int sel, 
 
 	return div;
 }
-
 #if 0
 unsigned int leo_clk_get_cpu_div(struct device_node *np, unsigned int sel, const char **parent_name)
 {
@@ -217,8 +217,7 @@ unsigned int leo_clk_get_cpu_div(struct device_node *np, unsigned int sel, const
 
 	return div;
 }
-#endif
-
+#endif 
 unsigned int leo_clk_get_ahb_div(struct device_node *np, unsigned int sel, const char **parent_name)
 {
 	unsigned int div;
@@ -309,12 +308,12 @@ unsigned int leo_clk_get_div(struct device_node *np, const char **parent_name)
 		cr = ftscu100_readl(FTSCU100_OFFSET_STRAP);
 		sel = FTSCU100_STRAP_BOOT_CK_SEL(cr);
 		div = leo_clk_get_fastboot_div(np, sel, parent_name);
-#if 0
+	#if 0
 	} else if (!strcmp(name, "cpu")) {
 		cr = ftscu100_readl(FTSCU100_OFFSET_PLL0CR);
 		sel = FTSCU100_PLL0CR_CLKIN_MUX(cr);
 		div = leo_clk_get_cpu_div(np, sel, parent_name);
-#endif
+	#endif
 	} else if (!strcmp(name, "AHB") || !strcmp(name, "ahb") || !strcmp(name, "hclk")) {
 		cr = ftscu100_readl(FTSCU100_OFFSET_PLL0CR);
 		sel = FTSCU100_PLL0CR_CLKIN_MUX(cr);
@@ -404,14 +403,28 @@ static void __init of_leo_faraday_mux_setup(struct device_node *np)
 static unsigned long faraday_clk_composite_divider_recalc_rate(struct clk_hw *hw, unsigned long parent_rate)
 {
 	struct clk_divider *div = to_clk_divider(hw);
-	unsigned long mode, rate;
+	unsigned long mode, rate, pll_ns, pll_ms, mux;
 	unsigned int val;
+
+#define CONFIG_XTAL   25000000
 
 	val = readl(div->reg);
 
-	mode = (val >> div->shift) & div->width;
+	pll_ns = (val >> 24) & 0xff;
+	pll_ms = (val >> 16) & 0xff;
+	mux = pll_ns / pll_ms;
 
-	rate = parent_rate >> mode;
+	/*
+	if (mux < 0x25) {
+		rate = mux * CONFIG_XTAL;
+	} else {
+		rate = 1000000000;
+	}
+	*/
+	rate = mux * CONFIG_XTAL;
+
+	mode = (val >> div->shift) & div->width;
+	rate = rate >> mode;
 
 	return rate;
 }

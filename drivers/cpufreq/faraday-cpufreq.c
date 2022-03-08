@@ -35,31 +35,98 @@
 #include <asm/io.h>
 #include <asm/smp_plat.h>
 
+#include <linux/cdev.h>
+#include <linux/device.h>
+#include <linux/fs.h>
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <linux/jiffies.h>
+#include <linux/list.h>
+#include <linux/notifier.h>
+#include <linux/uaccess.h>
+
+#include <linux/io.h>
+#include <linux/delay.h>
+#include <linux/thermal.h>
+#include <linux/cpu.h>
+
+
 #include "faraday-cpufreq.h"
+
+#define PU_SOC_VOLTAGE_NORMAL	1100000
+#define VOLTAGE_BASE_VALUE   712500
+#define VOLTAGE_MAGIC_VALUE  12500
+#define PMIC_BUCK1_ON_VSEL_REG 0x2F
+#define PMIC_ADDR 0x18
 
 extern int plat_cpufreq_init(struct faraday_cpu_dvfs_info *);
 
 static struct faraday_cpu_dvfs_info *info;
 static struct cpufreq_freqs freqs;
-static DEFINE_MUTEX(cpufreq_lock);
+static u32 *scm701d_soc_volt;
+static u32 soc_opp_count = 0;
+static int pmic_i2c_num;
+static DEFINE_SPINLOCK(cpufreq_lock);
+
+static int faraday_voltage_target(u32 volt, int i2cnum)
+{
+	struct i2c_client *client;
+	struct i2c_adapter *adap;
+	u8 val;
+	u8 buffer[2];
+	struct i2c_msg msg;
+
+	adap = i2c_get_adapter(i2cnum);
+	if (!adap)
+		return -ENODEV;
+
+	client = kzalloc(sizeof(*client), GFP_KERNEL);
+	if (!client) {
+		i2c_put_adapter(adap);
+		return -ENOMEM;
+	}
+	snprintf(client->name, I2C_NAME_SIZE, "i2c-dev %d", adap->nr);
+
+	client->adapter = adap;
+	client->addr = PMIC_ADDR;
+
+	val = (volt - VOLTAGE_BASE_VALUE) / VOLTAGE_MAGIC_VALUE;
+
+	buffer[0] = PMIC_BUCK1_ON_VSEL_REG;
+	buffer[1] = val;
+
+	msg.addr = client->addr;
+	msg.flags = 0;
+	msg.len = sizeof(buffer);
+	msg.buf = buffer;
+
+	i2c_transfer(client->adapter, &msg, 1);
+
+	i2c_put_adapter(client->adapter);
+	kfree(client);
+
+	return 0;
+}
 
 static int faraday_cpufreq_target_index(struct cpufreq_policy *policy, unsigned int index)
 {
 	struct cpufreq_frequency_table *freq_table = info->freq_table;
 
-	mutex_lock(&cpufreq_lock);
+	spin_lock(&cpufreq_lock);
 
 	freqs.old = policy->cur;
 	freqs.new = freq_table[index].frequency;
 
 	cpufreq_freq_transition_begin(policy, &freqs);
 
-	if (freqs.new != freqs.old)
-		info->set_freq(info, index);
+	if (freqs.new != freqs.old) {
+		faraday_voltage_target(scm701d_soc_volt[index], pmic_i2c_num);
+		info->set_freq(info, freqs.new);
+	}
 
 	cpufreq_freq_transition_end(policy, &freqs, 0);
 
-	mutex_unlock(&cpufreq_lock);
+	spin_unlock(&cpufreq_lock);
 
 	return 0;
 }
@@ -79,6 +146,7 @@ static int faraday_cpufreq_resume(struct cpufreq_policy *policy)
 static int faraday_cpufreq_init(struct cpufreq_policy *policy)
 {
 	policy->clk = info->cpu_clk;
+	policy->transition_delay_us = 1000000;
 	return cpufreq_generic_init(policy, info->freq_table, 0);
 }
 
@@ -101,7 +169,6 @@ static irqreturn_t sysc_isr(int irq, void *dev_id)
 	unsigned int status; 
 
 	status = readl(info->sysc_base + 0x24);
-	printk("$$$$ status:%x\n",status);
 	writel(status, info->sysc_base + 0x24);    /* clear interrupt */
 
 	return IRQ_HANDLED;
@@ -112,7 +179,13 @@ static int faraday_cpufreq_probe(struct platform_device *pdev)
 	struct device *dev = &pdev->dev;
 	struct resource *res;
 	struct clk *cpu_clk;
-	int ret = -EINVAL;
+	int num, ret = -EINVAL;
+	u32 nr, i, j;
+	const struct property *prop;
+	const __be32 *val;
+	struct device_node *np;
+	unsigned long freq;
+	unsigned long volt;
 
 	info = kzalloc(sizeof(struct faraday_cpu_dvfs_info), GFP_KERNEL);
 	if (!info) {
@@ -186,11 +259,62 @@ static int faraday_cpufreq_probe(struct platform_device *pdev)
 		goto err_free_put_info;
 	}
 
+	num = dev_pm_opp_get_opp_count(info->dev);
+	if (num < 0) {
+		ret = num;
+		dev_err(info->dev, "no OPP table is found: %d\n", ret);
+		goto err_free_opp;
+	}
+
 	ret = dev_pm_opp_init_cpufreq_table(info->dev,
 	                                    &info->freq_table);
 	if (ret) {
 		dev_err(info->dev, "failed to init cpufreq table: %d\n", ret);
 		goto err_free_opp;
+	}
+
+	np = info->dev->of_node;
+	if (0 != of_property_read_u32(np, "pmic-i2cnum", &pmic_i2c_num)) {
+            printk("pmic-i2cnum error!\n");
+            goto err_free_table;
+    }
+
+	/* Make scm701d_soc_volt array's size same as arm opp number */
+	scm701d_soc_volt = devm_kzalloc(info->dev, sizeof(*scm701d_soc_volt) * num, GFP_KERNEL);
+	if (scm701d_soc_volt == NULL) {
+		ret = -ENOMEM;
+		goto err_free_table;
+	}
+
+	prop = of_find_property(np, "scm701d,operating-points", NULL);
+	if (!prop || !prop->value)
+		goto err_free_opp;
+
+	/*
+	 * Each OPP is a set of tuples consisting of frequency and
+	 * voltage like <freq-kHz vol-uV>.
+	 */
+	nr = prop->length / sizeof(u32);
+	if (nr % 2 || (nr / 2) < num)
+		goto err_free_opp;
+
+	for (j = 0; j < num; j++) {
+		val = prop->value;
+		for (i = 0; i < nr / 2; i++) {
+			freq = be32_to_cpup(val++);
+			volt = be32_to_cpup(val++);
+			if (info->freq_table[j].frequency == freq) {
+				scm701d_soc_volt[soc_opp_count++] = volt;
+				break;
+			}
+		}
+	}
+
+	/* use fixed soc opp volt if no valid soc opp info found in dtb */
+	if (soc_opp_count != num) {
+		dev_warn(info->dev, "can NOT find valid scm701d,soc-operating-points property in dtb, use default value!\n");
+		for (j = 0; j < num; j++)
+			scm701d_soc_volt[j] = PU_SOC_VOLTAGE_NORMAL;
 	}
 
 	ret = cpufreq_register_driver(&faraday_driver);
