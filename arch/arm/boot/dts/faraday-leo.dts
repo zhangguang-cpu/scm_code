@@ -1275,7 +1275,7 @@
 			interrupts = <GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>;
 			cooling-maps = <
 				/* start cooling, stop cooling, frequency kHz, cpu cores */
-				0    0       1025000   4  /* first line*/
+				0    0       800000   4  /* first line*/
 				95   90      700000   4
 				105  100     600000   4
 				115  110     500000   4
