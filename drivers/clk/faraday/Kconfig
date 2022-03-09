@@ -1,0 +1,4 @@
+config SCU_LEO
+        tristate "SCM701D SCU conctrol driver"
+        ---help---
+          This driver supports SCM701D SCU conctrol

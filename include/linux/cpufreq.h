@@ -192,6 +192,7 @@ void disable_cpufreq(void);
 u64 get_cpu_idle_time(unsigned int cpu, u64 *wall, int io_busy);
 int cpufreq_get_policy(struct cpufreq_policy *policy, unsigned int cpu);
 void cpufreq_update_policy(unsigned int cpu);
+int cpufreq_update_trip(unsigned int freq);
 bool have_governor_per_policy(void);
 struct kobject *get_governor_parent_kobj(struct cpufreq_policy *policy);
 void cpufreq_enable_fast_switch(struct cpufreq_policy *policy);
@@ -923,4 +924,37 @@ unsigned int cpufreq_generic_get(unsigned int cpu);
 int cpufreq_generic_init(struct cpufreq_policy *policy,
 		struct cpufreq_frequency_table *table,
 		unsigned int transition_latency);
+
+struct sched_domain;
+unsigned long cpufreq_scale_freq_capacity(struct sched_domain *sd, int cpu);
+unsigned long cpufreq_scale_max_freq_capacity(int cpu);
+#ifdef CONFIG_ARM_ROCKCHIP_CPUFREQ
+unsigned int rockchip_cpufreq_adjust_target(int cpu, unsigned int freq);
+int rockchip_cpufreq_get_scale(int cpu);
+int rockchip_cpufreq_set_scale_rate(struct device *dev, unsigned long rate);
+int rockchip_cpufreq_check_rate_volt(struct device *dev);
+#else
+static inline unsigned int rockchip_cpufreq_adjust_target(int cpu,
+							  unsigned int freq)
+{
+	return freq;
+}
+
+static inline int rockchip_cpufreq_get_scale(int cpu)
+{
+	return -EINVAL;
+}
+
+static inline int rockchip_cpufreq_set_scale_rate(struct device *dev,
+						  unsigned long rate)
+{
+	return -EINVAL;
+}
+
+static inline int rockchip_cpufreq_check_rate_volt(struct device *dev)
+{
+	return -EINVAL;
+}
+
+#endif
 #endif /* _LINUX_CPUFREQ_H */
