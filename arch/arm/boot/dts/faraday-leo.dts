@@ -990,7 +990,7 @@
 				1025000  1212500
 			>;
 			pmic-i2cnum = <0>;
-			scm701d,operating-points = <
+			scm801,operating-points = <
 				/* KHz	  uV */
 				500000  1000000
 				600000  1025000
@@ -1275,7 +1275,7 @@
 			interrupts = <GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>;
 			cooling-maps = <
 				/* start cooling, stop cooling, frequency kHz, cpu cores */
-				0    0       800000   4  /* first line*/
+				0    0       1025000   4  /* first line*/
 				95   90      700000   4
 				105  100     600000   4
 				115  110     500000   4
@@ -1723,7 +1723,7 @@
 			interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			status = "disabled";
+			status = "okay";
 		};
 		
 		i2c1: i2c@55600000 {

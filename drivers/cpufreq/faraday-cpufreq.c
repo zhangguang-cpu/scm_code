@@ -63,7 +63,7 @@ extern int plat_cpufreq_init(struct faraday_cpu_dvfs_info *);
 
 static struct faraday_cpu_dvfs_info *info;
 static struct cpufreq_freqs freqs;
-static u32 *scm701d_soc_volt;
+static u32 *scm801_soc_volt;
 static u32 soc_opp_count = 0;
 static int pmic_i2c_num;
 static DEFINE_SPINLOCK(cpufreq_lock);
@@ -89,7 +89,8 @@ static int faraday_voltage_target(u32 volt, int i2cnum)
 
 	client->adapter = adap;
 	client->addr = PMIC_ADDR;
-
+	
+	
 	val = (volt - VOLTAGE_BASE_VALUE) / VOLTAGE_MAGIC_VALUE;
 
 	buffer[0] = PMIC_BUCK1_ON_VSEL_REG;
@@ -120,7 +121,7 @@ static int faraday_cpufreq_target_index(struct cpufreq_policy *policy, unsigned 
 	cpufreq_freq_transition_begin(policy, &freqs);
 
 	if (freqs.new != freqs.old) {
-		faraday_voltage_target(scm701d_soc_volt[index], pmic_i2c_num);
+		faraday_voltage_target(scm801_soc_volt[index], pmic_i2c_num);
 		info->set_freq(info, freqs.new);
 	}
 
@@ -186,7 +187,6 @@ static int faraday_cpufreq_probe(struct platform_device *pdev)
 	struct device_node *np;
 	unsigned long freq;
 	unsigned long volt;
-
 	info = kzalloc(sizeof(struct faraday_cpu_dvfs_info), GFP_KERNEL);
 	if (!info) {
 		ret = -ENOMEM;
@@ -280,13 +280,13 @@ static int faraday_cpufreq_probe(struct platform_device *pdev)
     }
 
 	/* Make scm701d_soc_volt array's size same as arm opp number */
-	scm701d_soc_volt = devm_kzalloc(info->dev, sizeof(*scm701d_soc_volt) * num, GFP_KERNEL);
-	if (scm701d_soc_volt == NULL) {
+	scm801_soc_volt = devm_kzalloc(info->dev, sizeof(*scm801_soc_volt) * num, GFP_KERNEL);
+	if (scm801_soc_volt == NULL) {
 		ret = -ENOMEM;
 		goto err_free_table;
 	}
 
-	prop = of_find_property(np, "scm701d,operating-points", NULL);
+	prop = of_find_property(np, "scm801,operating-points", NULL);
 	if (!prop || !prop->value)
 		goto err_free_opp;
 
@@ -304,7 +304,7 @@ static int faraday_cpufreq_probe(struct platform_device *pdev)
 			freq = be32_to_cpup(val++);
 			volt = be32_to_cpup(val++);
 			if (info->freq_table[j].frequency == freq) {
-				scm701d_soc_volt[soc_opp_count++] = volt;
+				scm801_soc_volt[soc_opp_count++] = volt;
 				break;
 			}
 		}
@@ -314,7 +314,7 @@ static int faraday_cpufreq_probe(struct platform_device *pdev)
 	if (soc_opp_count != num) {
 		dev_warn(info->dev, "can NOT find valid scm701d,soc-operating-points property in dtb, use default value!\n");
 		for (j = 0; j < num; j++)
-			scm701d_soc_volt[j] = PU_SOC_VOLTAGE_NORMAL;
+			scm801_soc_volt[j] = PU_SOC_VOLTAGE_NORMAL;
 	}
 
 	ret = cpufreq_register_driver(&faraday_driver);
