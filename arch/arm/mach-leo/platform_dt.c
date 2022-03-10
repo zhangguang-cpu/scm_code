@@ -1057,7 +1057,6 @@ void platform_reset(enum reboot_mode mode, const char *cmd)
 
 static int __init platform_late_init(void)
 {
-	printk("#########platform_late_init\n");
 	//platform_add_devices(leo_devices, ARRAY_SIZE(leo_devices));
 	return 0;
 }
@@ -1068,7 +1067,7 @@ static const char *faraday_dt_match[] __initconst = {
 	NULL,
 };
 
-DT_MACHINE_START(FARADAY, "SCM701D")
+DT_MACHINE_START(FARADAY, "SCM801")
 	.atag_offset  = 0x100,
 	.dt_compat    = faraday_dt_match,
 	.smp          = smp_ops(faraday_smp_ops),
