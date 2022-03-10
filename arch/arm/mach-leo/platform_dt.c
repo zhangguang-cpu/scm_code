@@ -1068,7 +1068,7 @@ static const char *faraday_dt_match[] __initconst = {
 	NULL,
 };
 
-DT_MACHINE_START(FARADAY, "SCM701D")
+DT_MACHINE_START(FARADAY, "SCM801")
 	.atag_offset  = 0x100,
 	.dt_compat    = faraday_dt_match,
 	.smp          = smp_ops(faraday_smp_ops),
