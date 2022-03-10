@@ -210,7 +210,7 @@ static void leo_set_frequency(struct faraday_cpu_dvfs_info *info, unsigned int f
 
 	// enable scu irq
 	writel(0x00000001, (void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_ENABLE_SET + 0x04);
-
+#ifdef CONFIG_SMP
 	// make slave cpus go to idle
 	write_cpu_freeze(1);
 	for (i = 0; i < 4; i++) {
@@ -218,7 +218,7 @@ static void leo_set_frequency(struct faraday_cpu_dvfs_info *info, unsigned int f
 			smp_call_function_single(i, prepare_cpu_suspend, NULL, 0);
 		}
 	}
-
+#endif
 	/* wait uart tx over */
 	while (timeout-- > 0) {
 		if (readl(info->uart_base + UART_LSR) & UART_LSR_TEMT ) {

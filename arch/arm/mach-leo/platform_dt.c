@@ -1057,7 +1057,6 @@ void platform_reset(enum reboot_mode mode, const char *cmd)
 
 static int __init platform_late_init(void)
 {
-	printk("#########platform_late_init\n");
 	//platform_add_devices(leo_devices, ARRAY_SIZE(leo_devices));
 	return 0;
 }

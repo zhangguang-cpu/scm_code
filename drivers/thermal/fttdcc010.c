@@ -77,6 +77,7 @@ static void fttdcc010_force_update_temp(struct fttdcc010_thermal_priv *priv, int
 static int set_cooling(u32 frequency, u32 cores)
 {
 	cur_freq = cpufreq_update_trip(frequency);
+#ifdef CONFIG_SMP
 	if(cur_freq >= 0) {
 		switch(cores) {
 			case 4:
@@ -102,7 +103,7 @@ static int set_cooling(u32 frequency, u32 cores)
 				break;
 		}
 	}
-
+#endif
 	return cur_freq;
 }
 
