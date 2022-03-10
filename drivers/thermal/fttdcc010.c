@@ -28,6 +28,9 @@
 #include <linux/platform_device.h>
 #include <linux/delay.h>
 #include <linux/thermal.h>
+#include <linux/cpu.h>
+#include <linux/cpufreq.h>
+#include <linux/of_platform.h>
 
 #include "fttdcc010.h"
 
@@ -36,6 +39,22 @@
 
 #define NUM_TDC         1
 #define SCANMODE        SCANMODE_CONT
+
+#define HOT_LIMIT_TEMP_ON		(120)
+#define HOT_LIMIT_TEMP_OFF		(117)
+#define TDC_MAGIC_NUM_SIZE  4
+#define TDC_SINGLE_GROUP    4
+#define TDC_NUM_MAX         20
+#define TDC_GROUP_MAX       5
+
+static u32 tdc_group_num = 0;
+static u32 cool_level = 0;
+static int start_cooling[TDC_GROUP_MAX];
+static int stop_cooling[TDC_GROUP_MAX];
+static u32 frequency_adjust[TDC_GROUP_MAX];
+static u32 cores_adjust[TDC_GROUP_MAX];
+static int cur_freq = 0;
+static u32 thermal_critical_trips = CRITICAL_THERMAL;
 
 static void fttdcc010_force_update_temp(struct fttdcc010_thermal_priv *priv, int id)
 {
@@ -55,22 +74,74 @@ static void fttdcc010_force_update_temp(struct fttdcc010_thermal_priv *priv, int
 	}
 }
 
+static int set_cooling(u32 frequency, u32 cores)
+{
+	cur_freq = cpufreq_update_trip(frequency);
+	if(cur_freq >= 0) {
+		switch(cores) {
+			case 4:
+			default:
+				cpu_up(1);
+				cpu_up(2);
+				cpu_up(3);
+				break;
+			case 3:
+				cpu_up(1);
+				cpu_up(2);
+				cpu_down(3);
+				break;
+			case 2:
+				cpu_up(1);
+				cpu_down(2);
+				cpu_down(3);
+				break;
+			case 1:
+				cpu_down(1);
+				cpu_down(2);
+				cpu_down(3);
+				break;
+		}
+	}
+
+	return cur_freq;
+}
+
 static int fttdcc010_get_temp(struct thermal_zone_device *thermal,
                               int *temp)
 {
 	struct fttdcc010_thermal_priv *priv = thermal->devdata;
-	u32 val;
+	int val;
+	u32 i;
 	
 	if(SCANMODE == SCANMODE_SGL)
-		fttdcc010_force_update_temp(priv, thermal->id);
+		fttdcc010_force_update_temp(priv, 0);
 	
-	val = readl(&priv->regs->data[thermal->id]);
+	val = readl(&priv->regs->data[0]) & 0x3FF;
 	
-	if(val >= 374)
-		*temp = (val - 374)/4;
-	else
-		*temp = (374 - val)/4;
-	
+	*temp = (val - 376)/4;
+
+	for(i = 1; i < tdc_group_num; i++) {
+		/* stop cooling */
+		if((cool_level == i) && (*temp < stop_cooling[i])) {
+			cool_level--;
+			set_cooling(frequency_adjust[cool_level], cores_adjust[cool_level]);
+		}
+
+		/* start cooling */
+		if((cool_level < i) && (*temp >= start_cooling[i])) {
+			cool_level = i;
+			set_cooling(frequency_adjust[cool_level], cores_adjust[cool_level]);
+		}
+	}
+
+	/* mise */
+	if (cur_freq != frequency_adjust[cool_level]){
+		set_cooling(frequency_adjust[cool_level], cores_adjust[cool_level]);
+	}
+	if((0 == cool_level) && (cur_freq != frequency_adjust[0])){
+		//set_cooling(frequency_adjust[0], cores_adjust[0]);
+	}
+
 	return 0;
 }
 
@@ -330,7 +401,7 @@ static void fttdcc010_init(struct fttdcc010_thermal_priv *priv)
 static void fttdcc010_populate_trips(struct fttdcc010_thermal_trip *trips)
 {
 	trips[0].type = THERMAL_TRIP_CRITICAL;
-	trips[0].temperature = CRITICAL_THERMAL;
+	trips[0].temperature = thermal_critical_trips;
 }
 
 static int fttdcc010_probe(struct platform_device *pdev)
@@ -343,12 +414,70 @@ static int fttdcc010_probe(struct platform_device *pdev)
 	struct fttdcc010_thermal_trip *trip;
 	struct resource *res, *irq;
 	int ret, i;
+	int data[TDC_SINGLE_GROUP];
 	
 #ifdef CONFIG_OF
+	int size = 0;
+	const __be32 *list;
+
 	if (!np) {
 		dev_err(&pdev->dev, "Failed to get device node\n");
 		return -EINVAL;
 	}
+
+	of_property_read_u32(np, "thermal-critical-trips", &thermal_critical_trips);
+	printk("thermal_critical_trips:%d\n", thermal_critical_trips);
+	
+	list = of_get_property(np, "cooling-maps", &size);
+	
+
+	if (!list)
+		return -EINVAL;
+
+	size = size / TDC_MAGIC_NUM_SIZE;
+	if(0 == size || size >= TDC_NUM_MAX || size % TDC_SINGLE_GROUP) {
+		dev_err(&pdev->dev, "%pOF: number error!\n", np);
+		return -EINVAL;
+	}
+
+	tdc_group_num = 0;
+
+	while(size > 0) {
+		for (i = 0; i < TDC_SINGLE_GROUP; i++) {
+			data[i] = be32_to_cpu(*list++);
+		}
+
+		/* start cooling: start reduce frequency and
+							reduce nuclears , Max 180*/
+		if(data[0] > 180)
+			break;
+
+		/* stop cooling: can't be bigger than start cooling*/
+		if(data[1] > data[0])
+			break;
+
+		/* frequency: KHz referrence to operating-points */
+		if(data[2] > 1800000)
+			break;
+
+		/* core_reduce:1,2,3,4 */
+		if(data[3] > 4 || 0 == data[3])
+			break;
+
+		start_cooling[tdc_group_num]      = data[0];
+		stop_cooling[tdc_group_num]       = data[1];
+		frequency_adjust[tdc_group_num]   = data[2];
+		cores_adjust[tdc_group_num]       = data[3];
+
+		tdc_group_num++;
+		if(tdc_group_num >= TDC_GROUP_MAX)
+			break;
+
+		size -= TDC_SINGLE_GROUP;
+	};
+
+	cool_level = 0;
+	//set_cooling(frequency_adjust[0], cores_adjust[0]);
 #endif
 	
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
@@ -412,7 +541,7 @@ static int fttdcc010_probe(struct platform_device *pdev)
 		fttdcc010_populate_trips(zone->trips);
 		
 		zone->thermal = thermal_zone_device_register("fttdcc010_thermal", zone->ntrips, 1,
-		                                             priv, &ops, NULL, 0, SCANMODE == SCANMODE_SGL ? 500 : 0);
+		                                             priv, &ops, NULL, 1000, 2000);
 		if (IS_ERR(zone->thermal)) {
 			dev_err(&pdev->dev, "Failed to register thermal zone device\n");
 			ret = PTR_ERR(zone->thermal);
@@ -424,7 +553,7 @@ static int fttdcc010_probe(struct platform_device *pdev)
 		zone->id = zone->thermal->id;
 		list_add_tail(&zone->list, &priv->head);
 
-		writel(HTHR_EN | HTHR(MCELSIUS(CRITICAL_THERMAL)), &priv->regs->thrhold[i]);
+		writel(HTHR_EN | HTHR(MCELSIUS(thermal_critical_trips)), &priv->regs->thrhold[i]);
 		writel(OVR_INTEN(i) | CHDONE_INTEN(i), &priv->regs->inten);	
 	}
 	
