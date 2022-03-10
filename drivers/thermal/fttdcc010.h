@@ -76,7 +76,7 @@ struct fttdcc010_regs {
 	u32		revision;
 };
 
-#define CRITICAL_THERMAL                    140
+#define CRITICAL_THERMAL                    180
 #define MCELSIUS(temp)                      ((temp) * 4 + 374)
 #define fttdcc010_thermal_priv_to_dev(priv) ((priv)->dev)
 

@@ -391,7 +391,7 @@ static void handle_critical_trips(struct thermal_zone_device *tz,
 	if (trip_type == THERMAL_TRIP_CRITICAL) {
 		dev_emerg(&tz->device,
 			  "critical temperature reached (%d C), shutting down\n",
-			  tz->temperature / 1000);
+			  tz->temperature);
 		mutex_lock(&poweroff_lock);
 		if (!power_off_triggered) {
 			/*
@@ -1252,10 +1252,12 @@ thermal_zone_device_register(const char *type, int trips, int mask,
 
 	/* Update 'this' zone's governor information */
 	mutex_lock(&thermal_governor_lock);
+
 	if (tz->tzp)
 		governor = __find_governor(tz->tzp->governor_name);
 	else
 		governor = def_governor;
+
 	result = thermal_set_governor(tz, governor);
 	if (result) {
 		mutex_unlock(&thermal_governor_lock);
