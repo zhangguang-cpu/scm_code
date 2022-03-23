@@ -59,31 +59,33 @@
 		cpu0: cpu@0 {
 			compatible = "arm,cortex-a7";
 			device_type = "cpu";
-			clock-frequency = <800000000>;
+			/*clock-frequency = <800000000>;*/
 			reg = <0x0>;
 			/*enable-method = "psci";*/
 		};
+#if 0
 		cpu1: cpu@1 {
 			compatible = "arm,cortex-a7";
 			device_type = "cpu";
-			clock-frequency = <800000000>;
+			/*clock-frequency = <800000000>;*/
 			reg = <0x1>;
 			/*enable-method = "psci";*/
 		};
 		cpu2: cpu@2 {
 			compatible = "arm,cortex-a7";
 			device_type = "cpu";
-			clock-frequency = <800000000>;
+			/*clock-frequency = <800000000>;*/
 			reg = <0x2>;
 			/*enable-method = "psci";*/
 		};
 		cpu3: cpu@3 {
 			compatible = "arm,cortex-a7";
 			device_type = "cpu";
-			clock-frequency = <800000000>;
+			/*clock-frequency = <800000000>;*/
 			reg = <0x3>;
 			/*enable-method = "psci";*/
 		};
+#endif
 	};
 	
 	memory@80000000 {
@@ -93,7 +95,7 @@
 	
 	timer {
 		compatible = "arm,armv7-timer";
-		clock-frequency = <800000000>;  /* kernel default cpu frequency */
+		clock-frequency = <1025000000>;  /* kernel default cpu frequency */
 		interrupts = <GIC_PPI 13 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
 		             <GIC_PPI 14 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
 		             <GIC_PPI 11 (GIC_CPU_MASK_SIMPLE(4) | IRQ_TYPE_LEVEL_LOW)>,
@@ -978,12 +980,37 @@
 			clock-names = "cpu";
 			operating-points = <
 				/* KHz	  uV */
-				100000 1100000
-				200000 1100000
-				400000 1100000
-				800000 1100000
+				500000  1000000
+				600000  1025000
+				700000  1075000
+				800000  1100000
+				900000  1150000
+				925000  1150000
+				950000  1150000
+				975000  1150000
+				1000000  1212500
+				1025000  1212500
+			>;
+			pmic-i2cnum = <0>;
+			scm801,operating-points = <
+				/* KHz	  uV */
+				500000  1000000
+				600000  1025000
+				700000  1075000
+				800000  1100000
+				900000  1150000
+				925000  1150000
+				950000  1150000
+				975000  1150000
+				1000000  1212500
+				1025000  1212500
 			>;
 			status = "okay";
+
+			/* cooling options */
+			cooling-min-level = <0>;
+			cooling-max-level = <4>;
+			#cooling-cells = <2>; /* min followed by max */
 		};
 
 		efuse0@22000000 {
@@ -1248,7 +1275,16 @@
 			interrupt-parent = <&gic>;
 			reg = <0x54500000 0x1000>;
 			interrupts = <GIC_SPI 77 IRQ_TYPE_LEVEL_HIGH>;
+			cooling-maps = <
+				/* start cooling, stop cooling, frequency kHz, cpu cores */
+				0    0       1025000   4  /* first line*/
+				95   90      700000   4
+				105  100     600000   4
+				115  110     500000   4
+			>;
+			thermal-critical-trips = <140>;
 			status = "okay";
+			#thermal-sensor-cells = <0>;
 		};
 		
 		dma0: ftdmac030@28500000 {
@@ -1689,7 +1725,7 @@
 			interrupts = <GIC_SPI 40 IRQ_TYPE_LEVEL_HIGH>;
 			clocks = <&pclk>;
 			clock-names = "pclk";
-			status = "disabled";
+			status = "okay";
 		};
 		
 		i2c1: i2c@55600000 {

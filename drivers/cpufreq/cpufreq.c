@@ -100,7 +100,7 @@ static int __init init_cpufreq_transition_notifier_list(void)
 }
 pure_initcall(init_cpufreq_transition_notifier_list);
 
-static int off __read_mostly;
+static int off   __read_mostly;
 static int cpufreq_disabled(void)
 {
 	return off;
@@ -717,12 +717,52 @@ store_one(scaling_max_freq, max);
 static ssize_t show_cpuinfo_cur_freq(struct cpufreq_policy *policy,
 					char *buf)
 {
-	unsigned int cur_freq = __cpufreq_get(policy);
+	unsigned int cur_freq = policy->cur;//__cpufreq_get(policy);
 
 	if (cur_freq)
 		return sprintf(buf, "%u\n", cur_freq);
 
 	return sprintf(buf, "<unknown>\n");
+}
+
+/**
+ * show_scaling_disable - show the current status for the specified CPU
+ */
+static ssize_t show_scaling_disable(struct cpufreq_policy *policy, char *buf)
+{
+	if (cpufreq_disabled())
+		return sprintf(buf, "1\n");
+	else
+		return sprintf(buf, "0\n");
+}
+
+/**
+ * store_scaling_disable - store disable for the specified CPU
+ */
+static ssize_t store_scaling_disable(struct cpufreq_policy *policy,
+					const char *buf, size_t count)
+{
+	unsigned int status = 0;
+	unsigned int ret;
+
+	if (!policy->governor)
+		return -EINVAL;
+
+	ret = sscanf(buf, "%u", &status);
+	if (ret != 1)
+		return -EINVAL;
+
+	if(status) {
+		if (policy->governor->store_setspeed)
+			policy->governor->store_setspeed(policy, policy->cpuinfo.max_freq);
+		off = 1;
+	}
+	else
+		off = 0;
+
+	return count;
+
+
 }
 
 /**
@@ -872,20 +912,11 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
 	return sprintf(buf, "%u\n", policy->cpuinfo.max_freq);
 }
 
-
-//zg-20201020
-//static ssize_t show_scaling_available_freqs(struct cpufreq_policy *policy, char *buf)
-//{
-	
-//	return scaling_available_frequencies_show(policy,buf);
-//}
-
 cpufreq_freq_attr_ro_perm(cpuinfo_cur_freq, 0400);
 cpufreq_freq_attr_ro(cpuinfo_min_freq);
 cpufreq_freq_attr_ro(cpuinfo_max_freq);
 cpufreq_freq_attr_ro(cpuinfo_transition_latency);
 cpufreq_freq_attr_ro(scaling_available_governors);
-//cpufreq_freq_attr_ro(scaling_available_freqs);  //zg-20201020
 cpufreq_freq_attr_ro(scaling_driver);
 cpufreq_freq_attr_ro(scaling_cur_freq);
 cpufreq_freq_attr_ro(bios_limit);
@@ -894,6 +925,7 @@ cpufreq_freq_attr_ro(affected_cpus);
 cpufreq_freq_attr_rw(scaling_min_freq);
 cpufreq_freq_attr_rw(scaling_max_freq);
 cpufreq_freq_attr_rw(scaling_governor);
+cpufreq_freq_attr_rw(scaling_disable);
 cpufreq_freq_attr_rw(scaling_setspeed);
 
 static struct attribute *default_attrs[] = {
@@ -905,10 +937,9 @@ static struct attribute *default_attrs[] = {
 	&affected_cpus.attr,
 	&related_cpus.attr,
 	&scaling_governor.attr,
+	&scaling_disable.attr,
 	&scaling_driver.attr,
 	&scaling_available_governors.attr,
-	//&scaling_available_freqs.attr,  //zg-20201020
-	&cpufreq_freq_attr_scaling_available_freqs.attr,
 	&scaling_setspeed.attr,
 	NULL
 };
@@ -1196,6 +1227,7 @@ static int cpufreq_online(unsigned int cpu)
 		WARN_ON(!cpumask_test_cpu(cpu, policy->related_cpus));
 		if (!policy_is_inactive(policy))
 			return cpufreq_add_policy_cpu(policy, cpu);
+
 		/* This is the only online CPU for the policy.  Start over. */
 		new_policy = false;
 		down_write(&policy->rwsem);
@@ -1353,6 +1385,7 @@ static int cpufreq_add_dev(struct device *dev, struct subsys_interface *sif)
 	int ret;
 
 	dev_dbg(dev, "%s: adding CPU%u\n", __func__, cpu);
+
 	if (cpu_online(cpu)) {
 		ret = cpufreq_online(cpu);
 		if (ret)
@@ -2340,6 +2373,26 @@ unlock:
 }
 EXPORT_SYMBOL(cpufreq_update_policy);
 
+int cpufreq_update_trip(unsigned int freq)
+{
+	struct cpufreq_policy *policy = cpufreq_cpu_get(0);
+
+	if (!policy)
+		return -EINVAL;
+
+	if (!policy->governor || !policy->governor->store_setspeed)
+		return -EINVAL;
+
+	policy->governor->store_setspeed(policy, freq);
+
+
+	cpufreq_update_policy(0);
+
+	return policy->cur;
+}
+EXPORT_SYMBOL(cpufreq_update_trip);
+
+
 /*********************************************************************
  *               BOOST						     *
  *********************************************************************/
@@ -2586,6 +2639,7 @@ static int __init cpufreq_core_init(void)
 {
 	if (cpufreq_disabled())
 		return -ENODEV;
+
 	cpufreq_global_kobject = kobject_create_and_add("cpufreq", &cpu_subsys.dev_root->kobj);
 	BUG_ON(!cpufreq_global_kobject);
 

@@ -29,6 +29,7 @@
 #include <linux/cpufreq.h>
 #include <linux/delay.h>
 
+#include <asm/cputype.h>
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 #ifdef CONFIG_SMP
@@ -37,47 +38,187 @@
 
 #include "faraday-cpufreq.h"
 
-static DEFINE_SPINLOCK(wfi_lock);
+#include "mach/hardware.h"
 
-enum cpufreq_level_index {
-	L0, L1, L2, L3
-};
+#define GIC_CPU_CTRL                0x00
+#define GIC_DIST_ENABLE_SET         0x100
+#define GIC_DIST_ENABLE_CLEAR       0x180
+#define GIC_DIST_TARGET             0x800
 
-static void set_wfi(void) 
+volatile int cpu_freeze = -1;
+
+static u32 saved_irq[32];
+
+static void set_wfi(void)
 {
-	/*
-	 * Stop the local timer for this CPU.
-	 */
-	/*
-	 * Flush user cache and TLB mappings, and then remove this CPU
-	 * from the vm mask set of all processes.
-	*/
-	if (!spin_trylock(&wfi_lock)) {
-		printk("cpu_wfi lock error\n"); 
-		return;
-	}
-
-	flush_cache_all();
-	local_flush_tlb_all();
-
-	asm("wfi"); 
-	asm("nop"); 
-	asm("nop"); 
-	asm("nop"); 
-	asm("nop"); 
-	asm("nop"); 
-	asm("nop"); 
-
-	spin_unlock(&wfi_lock);
+	asm("wfi");
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
+	asm("nop");
 }
 
-#define UART_LSR        0x14        /* In:  Line Status Register */ 
-#define UART_LSR_TEMT   0x40        /* Transmitter empty */ 
-
-static void leo_set_frequency(struct faraday_cpu_dvfs_info *info, unsigned int index)
+static void write_cpu_freeze(int val)
 {
-	unsigned int val, timeout = 10000;
+	cpu_freeze = val;
+	smp_wmb();
+	sync_cache_w(&cpu_freeze);
+}
 
+static void prepare_cpu_suspend(void *arg)
+{
+	//printk("%s cpu=%d\n", __func__, smp_processor_id());
+	// disable per-cpu local timer irq
+	writel(0x6000FFFF, (void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_ENABLE_CLEAR);
+	
+	while (cpu_freeze){
+		dsb();
+		wfe();
+	}
+	
+	// enable per-cpu local timer irq
+	writel(0x6000FFFF, (void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_ENABLE_SET);
+}
+
+#define UART_LSR                    0x14        /* In:  Line Status Register */ 
+#define UART_LSR_TEMT               0x40        /* Transmitter empty */ 
+
+#define DLLFRANG(ns)                ((ns) <= 0x04) ? 0 : (((ns) <= 0x09) ? 1 : (((ns) <= 0x13) ? 2 : 3))
+
+static int leo_calculate_freqs(unsigned int freqs_KHz)
+{
+	int target;
+
+	switch (freqs_KHz) {
+		case 500000:
+			target = 0x14;
+			break;
+		case 525000:
+			target = 0x15;
+			break;
+		case 550000:
+			target = 0x16;
+			break;
+		case 575000:
+			target = 0x17;
+			break;
+		case 600000:
+			target = 0x18;
+			break;
+		case 625000:
+			target = 0x19;
+			break;
+		case 650000:
+			target = 0x1a;
+			break;
+		case 675000:
+			target = 0x1b;
+			break;
+		case 700000:
+			target = 0x1c;
+			break;
+		case 725000:
+			target = 0x1d;
+			break;
+		case 750000:
+			target = 0x1e;
+			break;
+		case 775000:
+			target = 0x1f;
+			break;
+		case 800000:
+			target = 0x20;
+			break;
+		case 825000:
+			target = 0x21;
+			break;
+		case 850000:
+			target = 0x22;
+			break;
+		case 875000:
+			target = 0x23;
+			break;
+		case 900000:
+			target = 0x24;
+			break;
+		case 925000:
+			target = 0x25;
+			break;
+		case 950000:
+			target = 0x26;
+			break;
+		case 975000:
+			target = 0x27;
+			break;
+		case 1000000:
+			target = 0x28;
+			break;
+		case 1025000:
+			target = 0x29;
+			break;
+		case 1050000:
+			target = 0x20;
+			break;
+		case 1075000:
+			target = 0x2B;
+			break;
+		case 1100000:
+			target = 0x2C;
+			break;
+		case 1125000:
+			target = 0x2D;
+			break;
+		case 1150000:
+			target = 0x2E;
+			break;
+		case 1175000:
+			target = 0x2F;
+			break;
+		case 1200000:
+			target = 0x30;
+			break;
+		default:
+			target = 0x20;
+			break;
+	}
+
+	return target;
+}
+
+static void leo_set_frequency(struct faraday_cpu_dvfs_info *info, unsigned int freqs_KHz)
+{
+	unsigned int cpu, val;
+	int current_ns, target_ns;
+	int i, timeout = 10000;
+
+	cpu = smp_processor_id();
+	//printk("%s cpu=%d freqs_KHz=%d\n", __func__, cpu, freqs_KHz);
+
+	// saves gic distributor enable registers, and clear its
+	local_irq_disable();
+	for (i = 0; i < 32; i++) {
+		saved_irq[i] = readl((void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_ENABLE_SET + i * 4);
+		writel(0xFFFFFFFF, (void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_ENABLE_CLEAR + i * 4);
+	}
+	local_irq_enable();
+
+	// retarget scu irq to current cpu
+	val = readl((void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_TARGET + 0x20) & ~0x0000000F;
+	writel(val | (1 << cpu), (void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_TARGET + 0x20);
+
+	// enable scu irq
+	writel(0x00000001, (void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_ENABLE_SET + 0x04);
+#ifdef CONFIG_SMP
+	// make slave cpus go to idle
+	write_cpu_freeze(1);
+	for (i = 0; i < 4; i++) {
+		if (i != cpu) {
+			smp_call_function_single(i, prepare_cpu_suspend, NULL, 0);
+		}
+	}
+#endif
 	/* wait uart tx over */
 	while (timeout-- > 0) {
 		if (readl(info->uart_base + UART_LSR) & UART_LSR_TEMT ) {
@@ -98,47 +239,46 @@ static void leo_set_frequency(struct faraday_cpu_dvfs_info *info, unsigned int i
 
 	writel(0x00000000, info->sysc_base + 0xB4);
 
-	val = readl(info->sysc_base + 0x28);
-        printk("$$$$ inttrupt  val:%x \n",val);
+	target_ns = leo_calculate_freqs(freqs_KHz);
+	current_ns = (readl(info->sysc_base + 0x30) >> 24) & 0xFF;
 
-	val = readl(info->sysc_base + 0x30) & ~(0x0F << 4);
-	printk("$$$$ change before: val:%x,index: %d\n",val,index);
-
- 	val = readl(info->sysc_base + 0x20); 
-	printk("$$$$ fcs before: val:%x \n",val);
-        val |= (0x01 << 6); 
-        writel(val, info->sysc_base + 0x20);
-	val = readl(info->sysc_base + 0x20);               
-        printk("$$$$ fcs after: val:%x \n",val);
-
-	switch (index) {
-		case L0: //cpu 100000 KHz
-			val = readl(info->sysc_base + 0x30) & ~(0x0F << 4);
-			val |= (0x03 << 4);
+	if (target_ns > current_ns) {
+		for (i = 1; i <= target_ns - current_ns; i++) {
+			val  = ((current_ns + i) << 24);
+			val |= (0x01 << 16);
+			val |= (DLLFRANG(current_ns + i) << 8);
+			val |= (0x03 <<  0);
 			writel(val, info->sysc_base + 0x30);
-			break;
-		case L1: //cpu 200000 KHz
-			val = readl(info->sysc_base + 0x30) & ~(0x0F << 4);
-			val |= (0x02 << 4);
+			
+			writel(0x70000100, info->sysc_base + 0x20);
+			
+			set_wfi();
+		}
+	} else {
+		for (i = 1; i <= current_ns - target_ns; i++) {
+			val  = ((current_ns - i) << 24);
+			val |= (0x01 << 16);
+			val |= (DLLFRANG(current_ns - i) << 8);
+			val |= (0x03 <<  0);
 			writel(val, info->sysc_base + 0x30);
-			break;
-		case L2: //cpu 400000 KHz
-			val = readl(info->sysc_base + 0x30) & ~(0x0F << 4);
-			val |= (0x01 << 4);
-			writel(val, info->sysc_base + 0x30);
-			break;
-		case L3: //cpu 800000 KHz
-			val = readl(info->sysc_base + 0x30) & ~(0x0F << 4);
-			val |= (0x00 << 4);
-			writel(val, info->sysc_base + 0x30);
-			break;
+			
+			writel(0x70000100, info->sysc_base + 0x20);
+			
+			set_wfi();
+		}
 	}
-	val = readl(info->sysc_base + 0x30) & ~(0x0F << 4);
-	printk("$$$$change after: val:%x\n",val);	
 
-	writel(0x60000040, info->sysc_base + 0x20);
+	// wakeup slave cpus from idle
+	write_cpu_freeze(0);
+	dsb();
+	sev();
 
-	set_wfi();
+	// restore gic distributor enable registers
+	local_irq_disable();
+	for (i = 0; i < 32; i++) {
+		writel(saved_irq[i], (void *)PLAT_GIC_DIST_VA_BASE + GIC_DIST_ENABLE_SET + i * 4);
+	}
+	local_irq_enable();
 }
 
 int plat_cpufreq_init(struct faraday_cpu_dvfs_info *info)
@@ -149,7 +289,7 @@ int plat_cpufreq_init(struct faraday_cpu_dvfs_info *info)
 
 	status = readl(info->sysc_base + 0x24);
 	writel(status, info->sysc_base + 0x24);    /* clear interrupt */
-	writel(0x0040, info->sysc_base + 0x28);    /* enable FCS interrupt */
+	writel(0x0100, info->sysc_base + 0x28);    /* enable PLL Update interrupt */
 
 	return 0;
 }

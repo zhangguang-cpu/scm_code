@@ -78,8 +78,10 @@
 #include <linux/dmi.h>
 
 #ifndef WDT_REG32
-#define WDT_REG32(off)      *(volatile uint32_t __force*)(PLAT_FTWDT011_VA_BASE + (off))                                                
+#define WDT_REG32(off)      		 *(volatile uint32_t __force*)(PLAT_FTWDT011_VA_BASE + (off))                                                
 #endif
+
+
 
 struct of_dev_auxdata plat_auxdata_lookup[] __initdata = {
 	OF_DEV_AUXDATA("pinctrl-leo",           PLAT_SCU_BASE,          "pinctrl-leo",          NULL),
@@ -197,6 +199,13 @@ static struct spi_board_info spi_devices[] __initdata = {
  *****************************************************************************/
 
 static struct map_desc plat_io_desc[] __initdata = {
+	{
+		/* EFUSE */
+		.virtual    = PLAT_EFUSE_VA_BASE,
+		.pfn        = __phys_to_pfn(PLAT_EFUSE_BASE),
+		.length     = SZ_64K,
+		.type       = MT_DEVICE,
+	},
 	{
 		/* SCU */
 		.virtual    = PLAT_SCU_VA_BASE,
@@ -499,13 +508,12 @@ static struct map_desc plat_io_desc[] __initdata = {
 		.length     = SZ_2M,
 		.type       = MT_DEVICE,
 	},
-        {
-                .virtual    = PLAT_CM33_SRAM_VA_BASE,
-                .pfn        = __phys_to_pfn(PLAT_CM33_SRAM_BASE),
-                .length     = SZ_128K,
-                .type       = MT_DEVICE,
-        },	
-
+	/*{
+		.virtual    = PLAT_FTWDT011_VA_WDT_UBOOT_BASE,
+		.pfn        = __phys_to_pfn(PLAT_FTWDT011_WDT_UBOOT_BASE),
+		.length     = SZ_1K,
+		.type       = MT_DEVICE,
+	},*/
 };
 
 static struct of_device_id faraday_clk_match[] __initconst = {
@@ -529,11 +537,23 @@ static void __init platform_clock_init(void)
 	clk_init(np);
 }
 
+
+#ifdef CONFIG_LEO_GPIO_WATCHDOG
+extern void wdt_ctrl_init(void);
+extern void wdt_ctrl_time(void);
+#endif
+
+
 static void __init platform_map_io(void)
 {
 	iotable_init((struct map_desc *)plat_io_desc, ARRAY_SIZE(plat_io_desc));
 
 	ftscu100_init(__io(PLAT_SCU_VA_BASE));
+	
+#ifdef CONFIG_LEO_GPIO_WATCHDOG
+	wdt_ctrl_init();
+	//printk("%s:%d feed dog one\n",__func__,__LINE__);
+#endif
 }
 
 static void __init platform_sys_timer_init(void)
@@ -627,8 +647,34 @@ static void __init platform_sdhci_init(void)
 	temp |= 0x30;	// frange
 	temp |= 0x40;	// pdn
 	writel(temp, (void __iomem *)PLAT_SCU_VA_BASE + 0x806C);
-
-#if 1	//20200521@BC: Increase driving strength to 16mA for the EMMC_1.
+#if 0
+	/* Increase driving strength to 7.5 mA at3.3 V , 3 mA at 1.8 V for the EMMC_0. */
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x8518);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x851C);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x8520);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x8524);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x8528);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x852C);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x8530);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x8534);
+	writel(0x88, (void __iomem *)PLAT_SCU_VA_BASE + 0x8538);
+	writel(0x80, (void __iomem *)PLAT_SCU_VA_BASE + 0x853C);
+	writel(0x80, (void __iomem *)PLAT_SCU_VA_BASE + 0x8540);
+#else
+	/* Increase driving strength to 10 mA at3.3 V , 4 mA at 1.8 V for the EMMC_0. */
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x8518);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x851C);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x8520);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x8524);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x8528);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x852C);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x8530);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x8534);
+	writel(0x08, (void __iomem *)PLAT_SCU_VA_BASE + 0x8538);
+	writel(0x00, (void __iomem *)PLAT_SCU_VA_BASE + 0x853C);
+	writel(0x00, (void __iomem *)PLAT_SCU_VA_BASE + 0x8540);
+#endif
+#if 0	//20200521@BC: Increase driving strength to 16mA for the EMMC_1.
 	writel(0x48, (void __iomem *)PLAT_SCU_VA_BASE + 0x8658);
 	writel(0x48, (void __iomem *)PLAT_SCU_VA_BASE + 0x865C);
 	writel(0x48, (void __iomem *)PLAT_SCU_VA_BASE + 0x8660);
@@ -758,18 +804,30 @@ static void __init platform_usb_u_iddig(void)
 	bool avail;
 
 	avail = of_device_available_by_path("/soc/usb_hcd@10200000");
-	if (avail && of_device_property_by_path("/soc/usb_hcd@10200000", "mini-A-plug")) {
-		writel(0x00F0C103, (void __iomem *)PLAT_SCU_VA_BASE + 0x8030);
+	if (avail) {
+		writel(0x00000008, (void __iomem *)PLAT_SCU_VA_BASE + 0x8548);
+
+		if(of_device_property_by_path("/soc/usb_hcd@10200000", "mini-A-plug")) {
+			writel(0x00F0C103, (void __iomem *)PLAT_SCU_VA_BASE + 0x8030);
+		}
 	}
 
 	avail = of_device_available_by_path("/soc/usb_hcd@10300000");
-	if (avail && of_device_property_by_path("/soc/usb_hcd@10300000", "mini-A-plug")) {
-		writel(0x00F0C103, (void __iomem *)PLAT_SCU_VA_BASE + 0x8034);
+	if (avail) {
+		writel(0x00000008, (void __iomem *)PLAT_SCU_VA_BASE + 0x8550);
+
+		if ( of_device_property_by_path("/soc/usb_hcd@10300000", "mini-A-plug")) {
+			writel(0x00F0C103, (void __iomem *)PLAT_SCU_VA_BASE + 0x8034);
+		}
 	}
 
 	avail = of_device_available_by_path("/soc/usb_hcd@10400000");
-	if (avail && of_device_property_by_path("/soc/usb_hcd@10400000", "mini-A-plug")) {
-		writel(0x00F0C103, (void __iomem *)PLAT_SCU_VA_BASE + 0x80E4);
+	if (avail) {
+		writel(0x00000008, (void __iomem *)PLAT_SCU_VA_BASE + 0x8558);
+
+		if ( of_device_property_by_path("/soc/usb_hcd@10400000", "mini-A-plug")) {
+			writel(0x00F0C103, (void __iomem *)PLAT_SCU_VA_BASE + 0x80E4);
+		}
 	}
 }
 
@@ -906,7 +964,7 @@ static void __init platform_pinctrl_modex(void)
 		temp &= ~0x00000002;    // X_UART5_RX     pin-mux by pinctrl-driver
 		temp &= ~0x00000001;    // X_UART5_TX     pin-mux by pinctrl-driver
 	}
-	temp |=((1<<7) | (1<<10)); //gpio22 gpio25
+
 	writel(temp, (void __iomem *)PLAT_SCU_VA_BASE + 0x8204);
 }
 #endif
@@ -966,6 +1024,10 @@ static struct platform_device *leo_devices[] __initdata = {
 
 static void __init platform_init(void)
 {
+#ifdef CONFIG_LEO_GPIO_WATCHDOG
+	wdt_ctrl_time();
+#endif
+
 	platform_usb_u_iddig();
 #ifdef CONFIG_PINCTRL_LEO_MODEX
 	platform_pinctrl_modex();
@@ -977,22 +1039,24 @@ static void __init platform_init(void)
 	of_platform_populate(NULL, of_default_bus_match_table, plat_auxdata_lookup, NULL);
 }
 
+#ifndef CONFIG_POWER_RESET_GPIO_RESTART
 void platform_reset(enum reboot_mode mode, const char *cmd)
 {
 	WDT_REG32(0x00) = 0x5555;       //write REPROG_KEY
 	while (WDT_REG32(0x14) & 0x01); //wait timer disable
 	WDT_REG32(0x14) |= 0x0004;      //reset enable
 	WDT_REG32(0x08) = 0x0001;       //write counter reload value
+
 	WDT_REG32(0x00) = 0xCCCC;       //write START_KEY
 	printk("restart...");
 	mdelay(50);
 	/* Software reset command  */
 	*(volatile uint32_t __force*)(PLAT_FTSCU100_VA_BASE + (0x20)) = 0x400;
 }
+#endif
 
 static int __init platform_late_init(void)
 {
-	//printk("#########platform_late_init\n");
 	//platform_add_devices(leo_devices, ARRAY_SIZE(leo_devices));
 	return 0;
 }
@@ -1003,7 +1067,7 @@ static const char *faraday_dt_match[] __initconst = {
 	NULL,
 };
 
-DT_MACHINE_START(FARADAY, "LEO")
+DT_MACHINE_START(FARADAY, "SCM801")
 	.atag_offset  = 0x100,
 	.dt_compat    = faraday_dt_match,
 	.smp          = smp_ops(faraday_smp_ops),
@@ -1011,5 +1075,7 @@ DT_MACHINE_START(FARADAY, "LEO")
 	.init_time    = platform_sys_timer_init,
 	.init_early   = platform_init_early,
 	.init_machine = platform_init,
+#ifndef CONFIG_POWER_RESET_GPIO_RESTART
 	.restart      = platform_reset,
+#endif
 MACHINE_END
